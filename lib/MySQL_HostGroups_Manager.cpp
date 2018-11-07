@@ -1510,7 +1510,11 @@ MySQL_Connection * MySQL_HostGroups_Manager::get_MyConn_from_pool(unsigned int _
 		if (conn) {
 			mysrvc->ConnectionsUsed->add(conn);
 			status.myconnpoll_get_ok++;
+		} else {
+			proxy_error("Unable to get a random Connection from a valid Backend on HG %u, Server: %s, Port: %u, Weight: %u, Status %i", _hid, mysrvc->address, mysrvc->port, mysrvc->weight, mysrvc->status);
 		}
+	} else {
+		proxy_error("Unable to get a random Backend. This will lead to client Errors. HG_ %u", _hid);
 	}
 	wrunlock();
 	proxy_debug(PROXY_DEBUG_MYSQL_CONNPOOL, 7, "Returning MySQL Connection %p, server %s:%d\n", conn, (conn ? conn->parent->address : "") , (conn ? conn->parent->port : 0 ));
