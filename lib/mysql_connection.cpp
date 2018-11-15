@@ -213,6 +213,8 @@ MySQL_Connection::MySQL_Connection() {
 	MyRS=NULL;
 	unknown_transaction_status = false;
 	creation_time=0;
+	creation_attempt_time=0;
+	last_time_used = 0;
 	processing_multi_statement=false;
 	proxy_debug(PROXY_DEBUG_MYSQL_CONNPOOL, 4, "Creating new MySQL_Connection %p\n", this);
 	local_stmts=new MySQL_STMTs_local_v14(false); // false by default, it is a backend
@@ -592,11 +594,13 @@ void MySQL_Connection::set_is_client() {
 #define NEXT_IMMEDIATE(new_st) do { async_state_machine = new_st; goto handler_again; } while (0)
 
 MDB_ASYNC_ST MySQL_Connection::handler(short event) {
+	auto curtime = monotonic_time();
 	unsigned long long processed_bytes=0;	// issue #527 : this variable will store the amount of bytes processed during this event
 	if (mysql==NULL) {
 		// it is the first time handler() is being called
 		async_state_machine=ASYNC_CONNECT_START;
-		myds->wait_until=myds->sess->thread->curtime+mysql_thread___connect_timeout_server*1000;
+		creation_attempt_time = curtime;
+		myds->wait_until=creation_attempt_time + mysql_thread___connect_timeout_server * 1000;
 		if (myds->max_connect_time) {
 			if (myds->wait_until > myds->max_connect_time) {
 				myds->wait_until = myds->max_connect_time;
@@ -619,7 +623,7 @@ handler_again:
 				connect_cont(event);
 			}
 			if (async_exit_status) {
-					if (myds->sess->thread->curtime >= myds->wait_until) {
+					if (curtime >= myds->wait_until) {
 						NEXT_IMMEDIATE(ASYNC_CONNECT_TIMEOUT);
 					}
       	next_event(ASYNC_CONNECT_CONT);
@@ -667,7 +671,7 @@ handler_again:
 			break;
 		case ASYNC_CONNECT_TIMEOUT:
 			//proxy_error("Connect timeout on %s:%d : %llu - %llu = %llu\n",  parent->address, parent->port, myds->sess->thread->curtime , myds->wait_until, myds->sess->thread->curtime - myds->wait_until);
-			proxy_error("Connect timeout on %s:%d : exceeded by %lluus\n", parent->address, parent->port, myds->sess->thread->curtime - myds->wait_until);
+			proxy_error("Connect timeout on %s:%d : exceeded by %lluus\n", parent->address, parent->port, curtime - myds->wait_until);
 			parent->connect_error(mysql_errno(mysql));
 			break;
 		case ASYNC_CHANGE_USER_START:
@@ -714,7 +718,7 @@ handler_again:
 				ping_cont(event);
 			}
 			if (async_exit_status) {
-				if (myds->sess->thread->curtime >= myds->wait_until) {
+				if (curtime >= myds->wait_until) {
 					NEXT_IMMEDIATE(ASYNC_PING_TIMEOUT);
 				} else {
 					next_event(ASYNC_PING_CONT);
