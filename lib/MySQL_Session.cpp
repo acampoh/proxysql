@@ -2581,7 +2581,7 @@ handler_again:
 			}
 			if (mysql_thread___connect_timeout_server_max) {
 				if (mybe->server_myds->max_connect_time==0)
-					mybe->server_myds->max_connect_time=thread->curtime+mysql_thread___connect_timeout_server_max*1000;
+					mybe->server_myds->max_connect_time=monotonic_time() + mysql_thread___connect_timeout_server_max * 1000;
 			} else {
 				mybe->server_myds->max_connect_time=0;
 			}
