@@ -596,7 +596,7 @@ MDB_ASYNC_ST MySQL_Connection::handler(short event) {
 	if (mysql==NULL) {
 		// it is the first time handler() is being called
 		async_state_machine=ASYNC_CONNECT_START;
-		myds->wait_until=myds->sess->thread->curtime+mysql_thread___connect_timeout_server*1000;
+		myds->wait_until=creation_time + mysql_thread___connect_timeout_server * 1000;
 		if (myds->max_connect_time) {
 			if (myds->wait_until > myds->max_connect_time) {
 				myds->wait_until = myds->max_connect_time;
@@ -667,7 +667,7 @@ handler_again:
 			break;
 		case ASYNC_CONNECT_TIMEOUT:
 			//proxy_error("Connect timeout on %s:%d : %llu - %llu = %llu\n",  parent->address, parent->port, myds->sess->thread->curtime , myds->wait_until, myds->sess->thread->curtime - myds->wait_until);
-			proxy_error("Connect timeout on %s:%d : exceeded by %lluus\n", parent->address, parent->port, myds->sess->thread->curtime - myds->wait_until);
+			proxy_error("Connect timeout on %s:%d : exceeded by %lluus\n", parent->address, parent->port, creation_time - myds->wait_until);
 			parent->connect_error(mysql_errno(mysql));
 			break;
 		case ASYNC_CHANGE_USER_START:
