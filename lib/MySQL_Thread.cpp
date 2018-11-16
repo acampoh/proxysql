@@ -2491,8 +2491,26 @@ void MySQL_Thread::run() {
 		}
 	}
 #endif // IDLE_THREADS
+	auto new_time = monotonic_time();
+	auto time_diff = new_time - curtime;
+	++loop_iterations;
+	if (loop_time_max < time_diff)
+	{
+		loop_time_max = time_diff;
+	}
+	loop_time_counter+= time_diff;
 
-	curtime=monotonic_time();
+	if (loop_iterations >= 10000) {
+		proxy_error("[ADELCAMPO] avg loop time spent: %ul, max time spent %ul\n", loop_time_counter / 1000000, loop_time_max);
+		loop_time_max = 0;
+		loop_time_counter= 0;
+		loop_iterations = 0;
+	}
+	if (time_diff > 10000)
+	{
+		proxy_error("[ADELCAMPO] Main loop took about 10ms to complete. time: %lu us\n", time_diff);
+	}
+	curtime=new_time;
 	atomic_curtime=curtime;
 
 #ifdef PROXYSQL_MYSQL_PTHREAD_MUTEX
@@ -2802,7 +2820,26 @@ __run_skip_1a:
 #endif
 		mypolls.poll_timeout=0; // always reset this to 0 . If a session needs a specific timeout, it will set this one
 
-		curtime=monotonic_time();
+		new_time = monotonic_time();
+		time_diff = new_time - curtime;
+		++loop_iterations;
+		if (loop_time_max < time_diff)
+		{
+			loop_time_max = time_diff;
+		}
+		loop_time_counter+= time_diff;
+
+		if (loop_iterations >= 1000000) {
+			proxy_error("[ADELCAMPO] avg loop time spent: %ul, max time spent %ul\n", loop_time_counter / 1000000, loop_time_max);
+			loop_time_max = 0;
+			loop_time_counter= 0;
+			loop_iterations = 0;
+		}
+		if (time_diff > 10000)
+		{
+			proxy_error("[ADELCAMPO] Main loop took about 10ms to complete. time: %lu us\n", time_diff);
+		}
+		curtime=new_time;
 		atomic_curtime=curtime;
 		poll_timeout_bool=false;
 		if (
@@ -3458,6 +3495,9 @@ MySQL_Thread::MySQL_Thread() {
 	myexchange.resume_mysql_sessions=NULL;
 #endif // IDLE_THREADS
 	processing_idles=false;
+	loop_iterations=0;
+	loop_time_counter = 0;
+	loop_time_max = 0;
 	last_processing_idles=0;
 	__thread_MySQL_Thread_Variables_version=0;
 	mysql_thread___server_version=NULL;
