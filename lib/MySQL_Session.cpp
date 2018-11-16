@@ -1694,7 +1694,10 @@ bool MySQL_Session::handler_again___status_CONNECTING_SERVER(int *_rc) {
 			if (mirror) {
 				PROXY_TRACE();
 			}
+			auto prev_state = previous_status.top();
 			char buf[256];
+			proxy_error("[ADELCAMPO] Max connect timeout reached while reaching hostgroup %d after %llums coming from %i \n",current_hostgroup, (thread->curtime - CurrentQuery.start_time)/1000, prev_state);
+
 			sprintf(buf,"Max connect timeout reached while reaching hostgroup %d after %llums", current_hostgroup, (thread->curtime - CurrentQuery.start_time)/1000 );
 			client_myds->myprot.generate_pkt_ERR(true,NULL,NULL,1,9001,(char *)"HY000",buf);
 #ifdef DEBUG
@@ -4247,6 +4250,7 @@ void MySQL_Session::handler___client_DSS_QUERY_SENT___server_DSS_NOT_INITIALIZED
 		mybe->server_myds->fd=myconn->fd;
 		mybe->server_myds->DSS=STATE_MARIADB_CONNECTING;
 		status=CONNECTING_SERVER;
+		proxy_warning("[ADELCAMPO] session got a connection with a bad descriptor \n");
 		mybe->server_myds->myconn->reusable=true;
 	} else {
 		proxy_debug(PROXY_DEBUG_MYSQL_CONNECTION, 5, "Sess=%p -- MySQL Connection found = %p\n", this, mybe->server_myds->myconn);

@@ -1360,6 +1360,7 @@ MySrvC *MyHGC::get_random_MySrvC() {
 			}
 		}
 		if (sum==0) {
+			proxy_error("[ADELCAMPO] Returning MySrvC NULL because no backend ONLINE or with weight trying to unshun nodes (first round)\n");
 			proxy_debug(PROXY_DEBUG_MYSQL_CONNPOOL, 7, "Returning MySrvC NULL because no backend ONLINE or with weight\n");
 			return NULL; // if we reach here, we couldn't find any target
 		}
@@ -1384,6 +1385,7 @@ MySrvC *MyHGC::get_random_MySrvC() {
 		}
 
 		if (New_sum==0) {
+			proxy_error("[ADELCAMPO] Returning MySrvC NULL because servers overloaded (second round)\n");
 			proxy_debug(PROXY_DEBUG_MYSQL_CONNPOOL, 7, "Returning MySrvC NULL because no backend ONLINE or with weight\n");
 			return NULL; // if we reach here, we couldn't find any target
 		}
@@ -1415,6 +1417,8 @@ MySrvC *MyHGC::get_random_MySrvC() {
 			}
 		}
 	}
+
+	proxy_error("[ADELCAMPO] Returning MySrvC NULL because who knows (third round)\n");
 	proxy_debug(PROXY_DEBUG_MYSQL_CONNPOOL, 7, "Returning MySrvC NULL\n");
 	return NULL; // if we reach here, we couldn't find any target
 }
