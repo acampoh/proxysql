@@ -88,6 +88,8 @@ class MySQL_Connection {
 	bool send_quit;
 	bool reusable;
 	bool has_prepared_statement;
+	uint32_t iteration_counter;
+	uint32_t iteration_counter_with_event;
 	bool processing_prepared_statement_prepare;
 	bool processing_prepared_statement_execute;
 	bool processing_multi_statement;

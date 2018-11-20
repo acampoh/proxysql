@@ -600,6 +600,8 @@ MDB_ASYNC_ST MySQL_Connection::handler(short event) {
 		// it is the first time handler() is being called
 		async_state_machine=ASYNC_CONNECT_START;
 		creation_attempt_time = curtime;
+		iteration_counter = 0;
+		iteration_counter_with_event = 0;
 		myds->wait_until=creation_attempt_time + mysql_thread___connect_timeout_server * 1000;
 		if (myds->max_connect_time) {
 			if (myds->wait_until > myds->max_connect_time) {
@@ -619,19 +621,20 @@ handler_again:
 			}
 			break;
 		case ASYNC_CONNECT_CONT:
+			iteration_counter++;
 			if (event) {
+				iteration_counter_with_event++;
 				connect_cont(event);
 			}
 			if (async_exit_status) {
-					if (curtime >= myds->wait_until) {
-						NEXT_IMMEDIATE(ASYNC_CONNECT_TIMEOUT);
-					}
-      	next_event(ASYNC_CONNECT_CONT);
+				if (curtime >= myds->wait_until) {
+					NEXT_IMMEDIATE(ASYNC_CONNECT_TIMEOUT);
+				}
+				next_event(ASYNC_CONNECT_CONT);
 			} else {
 				NEXT_IMMEDIATE(ASYNC_CONNECT_END);
 			}
-    break;
-			break;
+		break;
 		case ASYNC_CONNECT_END:
 			if (!ret_mysql) {
 				// always increase the counter
@@ -670,6 +673,10 @@ handler_again:
 			parent->connect_error(mysql_errno(mysql));
 			break;
 		case ASYNC_CONNECT_TIMEOUT:
+			if (iteration_counter != iteration_counter_with_event) {
+				proxy_error("[ADELCAMPO] tested connection %u times, in a correct way only %u.\n", iteration_counter, iteration_counter_with_event);
+			}
+
 			//proxy_error("Connect timeout on %s:%d : %llu - %llu = %llu\n",  parent->address, parent->port, myds->sess->thread->curtime , myds->wait_until, myds->sess->thread->curtime - myds->wait_until);
 			proxy_error("Connect timeout on %s:%d : exceeded by %lluus\n", parent->address, parent->port, curtime - myds->wait_until);
 			parent->connect_error(mysql_errno(mysql));

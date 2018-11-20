@@ -2475,6 +2475,11 @@ void MySQL_Thread::unregister_session(int idx) {
 void MySQL_Thread::run() {
 	unsigned int n;
 	int rc;
+	long long unsigned int proc_idles_start;
+	long long unsigned int process_datastream_start;
+	long long unsigned int closing_idle_threads_start;
+	long long unsigned int mirror_queue_session_start;
+	long long unsigned int managing_streams_start;
 
 #ifdef IDLE_THREADS
 	bool idle_maintenance_thread=epoll_thread;
@@ -2526,6 +2531,7 @@ void MySQL_Thread::run() {
 	}
 #endif // IDLE_THREADS
 
+	proc_idles_start = monotonic_time();
 	int num_idles;
 	if (processing_idles==true &&	(last_processing_idles < curtime-mysql_thread___ping_timeout_server*1000)) {
 		processing_idles=false;
@@ -2562,10 +2568,15 @@ void MySQL_Thread::run() {
 		last_processing_idles=curtime;
 	}
 
+	if (monotonic_time() - proc_idles_start > 1000) {
+		proxy_error("[ADELCAMPO] Processing idles took more than 1ms!! %ul ms\n", monotonic_time() - proc_idles_start);
+	}
+
 #ifdef IDLE_THREADS
 __run_skip_1:
 
 		if (idle_maintenance_thread) {
+			auto idle_maintenance_thread_start = monotonic_time();
 			pthread_mutex_lock(&myexchange.mutex_idles);
 			while (myexchange.idle_mysql_sessions->len) {
 				MySQL_Session *mysess=(MySQL_Session *)myexchange.idle_mysql_sessions->remove_index_fast(0);
@@ -2583,9 +2594,13 @@ __run_skip_1:
 				//fprintf(stderr,"Adding session %p idx, DS %p idx %d\n",mysess,myds,myds->poll_fds_idx);
 			}
 			pthread_mutex_unlock(&myexchange.mutex_idles);
+			if (monotonic_time() - idle_maintenance_thread_start > 1000) {
+					proxy_error("[ADELCAMPO] Processing idle maintenance thread took more than 1ms!! %ul ms\n", monotonic_time() - idle_maintenance_thread_start);
+				}
 			goto __run_skip_1a;
 		}
 #endif // IDLE_THREADS
+		mirror_queue_session_start = monotonic_time();
 		while (mirror_queue_mysql_sessions->len) {
 			if (__sync_add_and_fetch(&GloMTH->status_variables.mirror_sessions_current,1) > (unsigned int)mysql_thread___mirror_max_concurrency ) {
 				__sync_sub_and_fetch(&GloMTH->status_variables.mirror_sessions_current,1);
@@ -2620,6 +2635,11 @@ __run_skip_1:
 				//newsess->to_process=0;
 			}
 		}
+		if (monotonic_time() - mirror_queue_session_start > 1000) {
+			proxy_error("[ADELCAMPO] Processing mirror queue sessions took more than 1ms!! %ul ms\n", monotonic_time() - mirror_queue_session_start);
+		}
+
+		process_datastream_start = monotonic_time();
 __mysql_thread_exit_add_mirror:
 		for (n = 0; n < mypolls.len; n++) {
 			MySQL_Data_Stream *myds=NULL;
@@ -2726,7 +2746,12 @@ __mysql_thread_exit_add_mirror:
 			proxy_debug(PROXY_DEBUG_NET,1,"Poll for DataStream=%p will be called with FD=%d and events=%d\n", mypolls.myds[n], mypolls.fds[n].fd, mypolls.fds[n].events);
 		}
 
+		if (monotonic_time() - process_datastream_start > 1000) {
+					proxy_error("[ADELCAMPO] Processing data streams took more than 1ms!! %ul ms \n", monotonic_time() - process_datastream_start);
+				}
+
 #ifdef IDLE_THREADS
+		closing_idle_threads_start = monotonic_time();
 		if (GloVars.global.idle_threads) {
 			if (idle_maintenance_thread==false) {
 				int r=rand()%(GloMTH->num_threads);
@@ -2765,7 +2790,9 @@ __mysql_thread_exit_add_mirror:
 				pthread_mutex_unlock(&myexchange.mutex_resumes);
 			}
 		}
-
+		if (monotonic_time() - closing_idle_threads_start > 1000) {
+			proxy_error("[ADELCAMPO] Processing idle threads took more than 1ms!! %ul ms\n", monotonic_time() - closing_idle_threads_start);
+		}
 
 __run_skip_1a:
 #endif // IDLE_THREADS
@@ -2775,6 +2802,8 @@ __run_skip_1a:
 #else
 		spin_wrunlock(&thread_mutex);
 #endif
+
+		auto check_listeners_start = monotonic_time();
 		while ((n=__sync_add_and_fetch(&mypolls.pending_listener_add,0))) {	// spin here
 			poll_listener_add(n);
 			assert(__sync_bool_compare_and_swap(&mypolls.pending_listener_add,n,0));
@@ -2787,38 +2816,63 @@ __run_skip_1a:
 			}
 		}
 
+		if (monotonic_time() - check_listeners_start > 1000) {
+			proxy_error("[ADELCAMPO] Processing listeners took more than 1ms!! %ul ms\n", monotonic_time() - check_listeners_start);
+		}
 
+		auto flush_log_start = monotonic_time();
 		// flush mysql log file
 		GloMyLogger->flush();
 
+		if (monotonic_time() - flush_log_start > 1000) {
+			proxy_error("[ADELCAMPO] Flushing log took more than 1ms!! %ul ms\n", monotonic_time() - flush_log_start);
+		}
+
+		auto polling_start = monotonic_time();
 		pre_poll_time=curtime;
 #ifdef IDLE_THREADS
 		if (GloVars.global.idle_threads && idle_maintenance_thread) {
+			auto polling_idle_thead_start = monotonic_time();
 			memset(events,0,sizeof(struct epoll_event)*MY_EPOLL_THREAD_MAXEVENTS); // let's make valgrind happy. It also seems that needs to be zeroed anyway
 			// we call epoll()
 			rc = epoll_wait (efd, events, MY_EPOLL_THREAD_MAXEVENTS, mysql_thread___poll_timeout);
+
+			if (monotonic_time() - polling_idle_thead_start > 1000) {
+				proxy_error("[ADELCAMPO] processing idle thread polling took more than 1ms!! %ul ms\n", monotonic_time() - polling_idle_thead_start);
+			}
 		} else {
 #endif // IDLE_THREADS
+		auto polling_thread_start = monotonic_time();
 		//this is the only portion of code not protected by a global mutex
 		proxy_debug(PROXY_DEBUG_NET,5,"Calling poll with timeout %d\n", ( mypolls.poll_timeout ? ( mypolls.poll_timeout/1000 > (unsigned int) mysql_thread___poll_timeout ? mypolls.poll_timeout/1000 : mysql_thread___poll_timeout ) : mysql_thread___poll_timeout )  );
 		// poll is called with a timeout of mypolls.poll_timeout if set , or mysql_thread___poll_timeout
 		rc=poll(mypolls.fds,mypolls.len, ( mypolls.poll_timeout ? ( mypolls.poll_timeout/1000 < (unsigned int) mysql_thread___poll_timeout ? mypolls.poll_timeout/1000 : mysql_thread___poll_timeout ) : mysql_thread___poll_timeout ) );
 		proxy_debug(PROXY_DEBUG_NET,5,"%s\n", "Returning poll");
+		if (monotonic_time() - polling_thread_start > 1000) {
+			proxy_error("[ADELCAMPO] processing thread polling took more than 1ms!! %ul ms\n", monotonic_time() - polling_thread_start);
+		}
 #ifdef IDLE_THREADS
 		}
 #endif // IDLE_THREADS
 
+		auto listeners_start = monotonic_time();
 		while ((n=__sync_add_and_fetch(&mypolls.pending_listener_del,0))) {	// spin here
 			poll_listener_del(n);
 			assert(__sync_bool_compare_and_swap(&mypolls.pending_listener_del,n,0));
 		}
-
+		if (monotonic_time() - listeners_start > 1000) {
+			proxy_error("[ADELCAMPO] processing listeners took more than 1ms!! %ul ms\n", monotonic_time() - listeners_start);
+		}
 #ifdef PROXYSQL_MYSQL_PTHREAD_MUTEX
 		pthread_mutex_lock(&thread_mutex);
 #else
 		spin_wrlock(&thread_mutex);
 #endif
 		mypolls.poll_timeout=0; // always reset this to 0 . If a session needs a specific timeout, it will set this one
+
+		if (monotonic_time() - polling_start > 1000) {
+			proxy_error("[ADELCAMPO] polling things took more than 1ms!! %ul ms\n", monotonic_time() - polling_start);
+		}
 
 		new_time = monotonic_time();
 		time_diff = new_time - curtime;
@@ -2842,6 +2896,8 @@ __run_skip_1a:
 		curtime=new_time;
 		atomic_curtime=curtime;
 		poll_timeout_bool=false;
+
+
 		if (
 #ifdef IDLE_THREADS
 			idle_maintenance_thread==false &&
@@ -2864,6 +2920,7 @@ __run_skip_1a:
 			maintenance_loop=false;
 		}
 
+		auto update_stats_start = monotonic_time();
 		// update polls statistics
 		mypolls.loops++;
 		mypolls.loop_counters->incr(curtime/1000000);
@@ -2893,6 +2950,9 @@ __run_skip_1a:
 			refresh_variables();
 		}
 
+		if (monotonic_time() - update_stats_start > 1000) {
+			proxy_error("[ADELCAMPO] updating stats took more than 1ms --> %u ms!!\n", monotonic_time() - update_stats_start);
+		}
 #ifdef IDLE_THREADS
 		if (idle_maintenance_thread==false) {
 #endif // IDLE_THREADS
@@ -2904,9 +2964,11 @@ __run_skip_1a:
 		}
 #endif // IDLE_THREADS
 
+
 #ifdef IDLE_THREADS
 		// here we handle epoll_wait()
 		if (GloVars.global.idle_threads && idle_maintenance_thread) {
+			auto idle_maintenance_start = monotonic_time();
 			if (rc) {
 				int i;
 				for (i=0; i<rc; i++) {
@@ -2983,21 +3045,26 @@ __run_skip_1a:
 					mysess_idx++;
 				}
 			}
+
+			if (monotonic_time() - idle_maintenance_start > 1000) {
+				proxy_error("[ADELCAMPO] Processing idle threads took more than 1ms --> %u ms!!\n", monotonic_time() - idle_maintenance_start);
+			}
 			goto __run_skip_2;
 		}
 #endif // IDLE_THREADS
 
+		managing_streams_start = monotonic_time();
 		for (n = 0; n < mypolls.len; n++) {
 			proxy_debug(PROXY_DEBUG_NET,3, "poll for fd %d events %d revents %d\n", mypolls.fds[n].fd , mypolls.fds[n].events, mypolls.fds[n].revents);
 
-			MySQL_Data_Stream *myds=mypolls.myds[n];
-			if (myds==NULL) {
+			MySQL_Data_Stream *myds = mypolls.myds[n];
+			if (myds == NULL) {
 				if (mypolls.fds[n].revents) {
 					unsigned char c;
-					if (read(mypolls.fds[n].fd, &c, 1)==-1) {// read just one byte
-						proxy_error("Error during read from signal_all_threads()\n");
-					}
-					proxy_debug(PROXY_DEBUG_GENERIC,3, "Got signal from admin , done nothing\n");
+					if (read(mypolls.fds[n].fd, &c, 1) == -1) { // read just one byte
+						proxy_error(
+								"Error during read from signal_all_threads()\n");
+					} proxy_debug(PROXY_DEBUG_GENERIC,3, "Got signal from admin , done nothing\n");
 					//fprintf(stderr,"Got signal from admin , done nothing\n"); // FIXME: this is just the scheleton for issue #253
 					if (c) {
 						// we are being signaled to sleep for some ms. Before going to sleep we also release the mutex
@@ -3006,7 +3073,7 @@ __run_skip_1a:
 #else
 						spin_wrunlock(&thread_mutex);
 #endif
-						usleep(c*1000);
+						usleep(c * 1000);
 #ifdef PROXYSQL_MYSQL_PTHREAD_MUTEX
 						pthread_mutex_lock(&thread_mutex);
 #else
@@ -3014,64 +3081,74 @@ __run_skip_1a:
 #endif
 						// we enter in maintenance loop only if c is set
 						// when threads are signaling each other, there is no need to set maintenance_loop
-						maintenance_loop=true;
+						maintenance_loop = true;
 					}
 				}
-			continue;
+				continue;
 			}
-			if (mypolls.fds[n].revents==0) {
-			// FIXME: this logic was removed completely because we added mariadb client library. Yet, we need to implement a way to manage connection timeout
-			// check for timeout
+			if (mypolls.fds[n].revents == 0) {
+				// FIXME: this logic was removed completely because we added mariadb client library. Yet, we need to implement a way to manage connection timeout
+				// check for timeout
 				// no events. This section is copied from process_data_on_data_stream()
 				if (poll_timeout_bool) {
-				MySQL_Data_Stream *_myds=mypolls.myds[n];
-				if (_myds && _myds->sess) {
-					if (_myds->wait_until && curtime > _myds->wait_until) {
-						// timeout
-						_myds->sess->to_process=1;
-					} else {
-						if (_myds->sess->pause_until && curtime > _myds->sess->pause_until) {
+					MySQL_Data_Stream *_myds = mypolls.myds[n];
+					if (_myds && _myds->sess) {
+						if (_myds->wait_until && curtime > _myds->wait_until) {
 							// timeout
-							_myds->sess->to_process=1;
+							_myds->sess->to_process = 1;
+						} else {
+							if (_myds->sess->pause_until
+									&& curtime > _myds->sess->pause_until) {
+								// timeout
+								_myds->sess->to_process = 1;
+							}
 						}
 					}
 				}
-				}
 			} else {
 				// check if the FD is valid
-				if (mypolls.fds[n].revents==POLLNVAL) {
+				if (mypolls.fds[n].revents == POLLNVAL) {
 					// debugging output before assert
-					MySQL_Data_Stream *_myds=mypolls.myds[n];
+					MySQL_Data_Stream *_myds = mypolls.myds[n];
 					if (_myds) {
 						if (_myds->myconn) {
-							proxy_error("revents==POLLNVAL for FD=%d, events=%d, MyDSFD=%d, MyConnFD=%d\n", mypolls.fds[n].fd, mypolls.fds[n].events, myds->fd, myds->myconn->fd);
+							proxy_error(
+									"revents==POLLNVAL for FD=%d, events=%d, MyDSFD=%d, MyConnFD=%d\n",
+									mypolls.fds[n].fd, mypolls.fds[n].events,
+									myds->fd, myds->myconn->fd);
 							assert(mypolls.fds[n].revents!=POLLNVAL);
 						}
 					}
 					// if we reached her, we didn't assert() yet
-					proxy_error("revents==POLLNVAL for FD=%d, events=%d, MyDSFD=%d\n", mypolls.fds[n].fd, mypolls.fds[n].events, myds->fd);
+					proxy_error(
+							"revents==POLLNVAL for FD=%d, events=%d, MyDSFD=%d\n",
+							mypolls.fds[n].fd, mypolls.fds[n].events, myds->fd);
 					assert(mypolls.fds[n].revents!=POLLNVAL);
 				}
-				switch(myds->myds_type) {
-		// Note: this logic that was here was removed completely because we added mariadb client library.
-					case MYDS_LISTENER:
-						// we got a new connection!
-						listener_handle_new_connection(myds,n);
-						continue;
-						break;
-					default:
-						break;
+				switch (myds->myds_type) {
+				// Note: this logic that was here was removed completely because we added mariadb client library.
+				case MYDS_LISTENER:
+					// we got a new connection!
+					listener_handle_new_connection(myds, n);
+					continue;
+					break;
+				default:
+					break;
 				}
 				// data on exiting connection
-				bool rc=process_data_on_data_stream(myds, n);
-				if (rc==false) {
+				bool rc = process_data_on_data_stream(myds, n);
+				if (rc == false) {
 					n--;
 				}
+			}
 		}
+		if (monotonic_time() - managing_streams_start > 1000) {
+			proxy_error("[ADELCAMPO] Processing Streams took more than 1ms --> %u ms!!\n", monotonic_time() - managing_streams_start);
 		}
-
 #ifdef IDLE_THREADS
 __run_skip_2:
+
+		auto processing_session_start = monotonic_time();
 		if (GloVars.global.idle_threads && idle_maintenance_thread) {
 			unsigned int w=rand()%(GloMTH->num_threads);
 			MySQL_Thread *thr=GloMTH->mysql_threads[w].worker;
@@ -3114,6 +3191,9 @@ __run_skip_2:
 
 			return_local_connections();
 #ifdef IDLE_THREADS
+		}
+		if (monotonic_time() - processing_session_start > 1000) {
+			proxy_error("[ADELCAMPO] Processing Sessions took more than 1ms --> %u ms!!\n", monotonic_time() - processing_session_start);
 		}
 #endif // IDLE_THREADS
 	}
