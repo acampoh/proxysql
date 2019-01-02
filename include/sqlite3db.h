@@ -1,5 +1,6 @@
 #ifndef __CLASS_SQLITE3DB_H
 #define __CLASS_SQLITE3DB_H
+#include <cstdarg>
 #include "proxysql.h"
 #include "cpp.h"
 #define PROXYSQL_SQLITE3DB_PTHREAD_MUTEX
@@ -174,6 +175,10 @@ class SQLite3DB {
 	private:
 	char *url;
 	sqlite3 *db;
+	char* query_buffer;
+	uint32_t buffer_size;
+
+	void generate_querystring(const char* str, va_list);
 #ifdef PROXYSQL_SQLITE3DB_PTHREAD_MUTEX
 	pthread_rwlock_t rwlock;
 #else
@@ -192,9 +197,9 @@ class SQLite3DB {
 	void wrlock();
 	void wrunlock();
 
-	bool execute(const char *);
-	bool execute_statement(const char *, char **, int *, int *, SQLite3_result **);
-	bool execute_statement_raw(const char *, char **, int *, int *, sqlite3_stmt **);
+	bool execute(const char * query, ...);
+	bool execute_statement(const char *, char **, int *, int *, SQLite3_result **, ...);
+	bool execute_statement_raw(const char *, char **, int *, int *, sqlite3_stmt **, ...);
 	int return_one_int(const char *);
 	int check_table_structure(char *table_name, char *table_def);
 	bool build_table(char *table_name, char *table_def, bool dropit);

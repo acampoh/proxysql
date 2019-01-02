@@ -4,10 +4,13 @@
 
 #define USLEEP_SQLITE_LOCKED 100
 
-SQLite3DB::SQLite3DB() {
-	db=NULL;
-	url=NULL;
-	assert_on_error=0;
+SQLite3DB::SQLite3DB() :
+url(nullptr),
+db(nullptr),
+query_buffer(nullptr),
+buffer_size(0),
+assert_on_error(0)
+{
 #ifdef PROXYSQL_SQLITE3DB_PTHREAD_MUTEX
 	pthread_rwlock_init(&rwlock, NULL);
 #else
@@ -28,6 +31,8 @@ SQLite3DB::~SQLite3DB() {
 		}
 	}
 	if (url) {free(url); url=NULL;}
+	if (query_buffer) {delete[] query_buffer;}
+
 }
 
 int SQLite3DB::open(char *__url, int flags) {
@@ -48,42 +53,64 @@ int SQLite3DB::open(char *__url, int flags) {
 	return 0;
 }
 
-bool SQLite3DB::execute(const char *str) {
+void SQLite3DB::generate_querystring(const char* str, va_list params) {
+
+	uint32_t replacement_size = vsnprintf(nullptr, 0, str, params);
+
+	if (replacement_size >= buffer_size) {
+		if (query_buffer) {
+			free(query_buffer);
+		}
+		buffer_size = replacement_size + 1;
+		query_buffer = (char*) malloc(buffer_size);
+	}
+
+	vsnprintf(query_buffer, buffer_size, str, params);
+}
+
+bool SQLite3DB::execute(const char *str, ...) {
 	assert(url);
 	assert(db);
-	char *err=NULL;
-	int rc=0;
+
+	va_list params;
+	va_start(params, str);
+	generate_querystring(str, params);
+	va_end(params);
+
+	char *err = NULL;
+	int rc = 0;
 	do {
-	rc=sqlite3_exec(db, str, NULL, 0, &err);
-//	fprintf(stderr,"%d : %s\n", rc, str);
-		if(err!=NULL) {
-			if (rc!=SQLITE_LOCKED) {
+		rc = sqlite3_exec(db, query_buffer, NULL, 0, &err);
+		if (err != NULL) {
+			if (rc != SQLITE_LOCKED) {
 				proxy_error("SQLITE error: %s --- %s\n", err, str);
 				if (assert_on_error) {
-					assert(err==0);
+					assert(err == 0);
 				}
 			}
 			sqlite3_free(err);
-			err=NULL;
+			err = NULL;
 		}
-		if (rc==SQLITE_LOCKED) { // the execution of sqlite3_exec() failed because locked
+		if (rc == SQLITE_LOCKED) { // the execution of sqlite3_exec() failed because locked
 			usleep(USLEEP_SQLITE_LOCKED);
 		}
-	} while (rc==SQLITE_LOCKED);
-	if (rc==SQLITE_OK) {
-		return true;
-	}
-	return false;
+	} while (rc == SQLITE_LOCKED);
+
+	return rc == SQLITE_OK;
 }
 
 
-bool SQLite3DB::execute_statement(const char *str, char **error, int *cols, int *affected_rows, SQLite3_result **resultset) {
+bool SQLite3DB::execute_statement(const char *str, char **error, int *cols, int *affected_rows, SQLite3_result **resultset, ...) {
 	int rc;
 	sqlite3_stmt *statement=NULL;
 	*error=NULL;
+	va_list params;
+	va_start(params, resultset);
+	generate_querystring(str, params);
+	va_end(params);
 	bool ret=false;
 	VALGRIND_DISABLE_ERROR_REPORTING;
-	if(sqlite3_prepare_v2(db, str, -1, &statement, 0) != SQLITE_OK) {
+	if(sqlite3_prepare_v2(db, query_buffer, -1, &statement, 0) != SQLITE_OK) {
 		*error=strdup(sqlite3_errmsg(db));
 		goto __exit_execute_statement;
 	}
@@ -114,11 +141,17 @@ __exit_execute_statement:
 	return ret;
 }
 
-bool SQLite3DB::execute_statement_raw(const char *str, char **error, int *cols, int *affected_rows, sqlite3_stmt **statement) {
+bool SQLite3DB::execute_statement_raw(const char *str, char **error, int *cols, int *affected_rows, sqlite3_stmt **statement, ...) {
 	int rc;
 	//sqlite3_stmt *statement=NULL;
 	*error=NULL;
 	bool ret=false;
+
+	va_list params;
+	va_start(params, statement);
+	generate_querystring(str, params);
+	va_end(params);
+
 	VALGRIND_DISABLE_ERROR_REPORTING;
 	if(sqlite3_prepare_v2(db, str, -1, statement, 0) != SQLITE_OK) {
 		*error=strdup(sqlite3_errmsg(db));
