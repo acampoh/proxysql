@@ -3943,7 +3943,7 @@ void ProxySQL_Admin::flush_admin_variables___database_to_runtime(SQLite3DB *db, 
 	int cols=0;
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
-	char *q=(char *)"SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'admin-%'";
+	char *q=(char *)"SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'admin-%%'";
 	admindb->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 	if (error) {
 		proxy_error("Error on %s : %s\n", q, error);
@@ -4023,7 +4023,7 @@ void ProxySQL_Admin::flush_mysql_variables___database_to_runtime(SQLite3DB *db, 
 	int cols=0;
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
-	char *q=(char *)"SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'mysql-%'";
+	char *q=(char *)"SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'mysql-%%'";
 	admindb->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 	if (error) {
 		proxy_error("Error on %s : %s\n", q, error);
@@ -4342,7 +4342,7 @@ void ProxySQL_Admin::flush_mysql_variables___runtime_to_database(SQLite3DB *db, 
 	}
 	if (del) {
 		proxy_debug(PROXY_DEBUG_ADMIN, 4, "Deleting MySQL variables from global_variables\n");
-		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'mysql-%'");
+		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'mysql-%%'");
 	}
 	static char *a;
 	static char *b;
@@ -4358,7 +4358,7 @@ void ProxySQL_Admin::flush_mysql_variables___runtime_to_database(SQLite3DB *db, 
 	rc=sqlite3_prepare_v2(mydb3, a, -1, &statement1, 0);
 	assert(rc==SQLITE_OK);
 	if (runtime)  {
-		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'mysql-%'");
+		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'mysql-%%'");
 		b=(char *)"INSERT INTO runtime_global_variables(variable_name, variable_value) VALUES(?1, ?2)";
 		rc=sqlite3_prepare_v2(mydb3, b, -1, &statement2, 0);
 		assert(rc==SQLITE_OK);
@@ -5894,10 +5894,10 @@ void ProxySQL_Admin::flush_admin_variables___runtime_to_database(SQLite3DB *db, 
 	}
 	if (del) {
 		proxy_debug(PROXY_DEBUG_ADMIN, 4, "Deleting ADMIN variables from global_variables\n");
-		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'admin-%'");
+		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'admin-%%'");
 	}
 	if (runtime) {
-		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'admin-%'");
+		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'admin-%%'");
 	}
 	char *a;
 	char *b=(char *)"INSERT INTO runtime_global_variables(variable_name, variable_value) VALUES(\"admin-%s\",\"%s\")";
