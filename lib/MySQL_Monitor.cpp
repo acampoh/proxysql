@@ -140,6 +140,16 @@ public:
 	MYSQL * get_connection(char *hostname, int port);
 	void put_connection(char *hostname, int port, MYSQL *my);
 	void purge_idle_connections();
+	~MySQL_Monitor_Connection_Pool() {
+		for (auto it = my_connections.begin(); it != my_connections.end(); ++it) {
+			for (auto conn : it->second) {
+				delete conn;
+			}
+			it->second.clear();
+		}
+
+		my_connections.clear();
+	}
 };
 
 void MySQL_Monitor_Connection_Pool::purge_idle_connections() {
@@ -789,13 +799,11 @@ __exit_monitor_read_only_thread:
 			int cols=0;
 			int affected_rows=0;
 			SQLite3_result *resultset=NULL;
-			char *new_query=NULL;
+			const char *new_query=NULL;
 			SQLite3DB *mondb=mmsd->mondb;
-			new_query=(char *)"SELECT 1 FROM (SELECT hostname,port,read_only,error FROM mysql_server_read_only_log WHERE hostname='%s' AND port='%d' ORDER BY time_start_us DESC LIMIT %d) a WHERE read_only IS NULL AND SUBSTR(error,1,7) = 'timeout' GROUP BY hostname,port HAVING COUNT(*)=%d";
-			char *buff=(char *)malloc(strlen(new_query)+strlen(mmsd->hostname)+32);
+			new_query="SELECT 1 FROM (SELECT hostname,port,read_only,error FROM mysql_server_read_only_log WHERE hostname='%s' AND port='%d' ORDER BY time_start_us DESC LIMIT %d) a WHERE read_only IS NULL AND SUBSTR(error,1,7) = 'timeout' GROUP BY hostname,port HAVING COUNT(*)=%d";
 			int max_failures=mysql_thread___monitor_read_only_max_timeout_count;
-			sprintf(buff,new_query, mmsd->hostname, mmsd->port, max_failures, max_failures);
-			mondb->execute_statement(buff, &error , &cols , &affected_rows , &resultset);
+			mondb->execute_statement(new_query, &error , &cols , &affected_rows , &resultset, mmsd->hostname, mmsd->port, max_failures, max_failures);
 			if (!error) {
 				if (resultset) {
 					if (resultset->rows_count) {
@@ -807,9 +815,8 @@ __exit_monitor_read_only_thread:
 					resultset=NULL;
 				}
 			} else {
-				proxy_error("Error on %s : %s\n", buff, error);
+				proxy_error("Error on %s : %s\n", new_query, error);
 			}
-			free(buff);
 		}
 	}
 	if (mmsd->interr) { // check failed
@@ -1782,10 +1789,8 @@ __end_monitor_ping_loop:
 			char *new_query=NULL;
 			new_query=(char *)"SELECT 1 FROM (SELECT hostname,port,ping_error FROM mysql_server_ping_log WHERE hostname='%s' AND port='%s' ORDER BY time_start_us DESC LIMIT %d) a WHERE ping_error IS NOT NULL AND ping_error NOT LIKE 'Access denied for user%%' AND ping_error NOT LIKE 'ProxySQL Error: Access denied for user%%' GROUP BY hostname,port HAVING COUNT(*)=%d";
 			for (j=0;j<i;j++) {
-				char *buff=(char *)malloc(strlen(new_query)+strlen(addresses[j])+strlen(ports[j])+16);
 				int max_failures=mysql_thread___monitor_ping_max_failures;
-				sprintf(buff,new_query,addresses[j],ports[j],max_failures,max_failures);
-				monitordb->execute_statement(buff, &error , &cols , &affected_rows , &resultset);
+				monitordb->execute_statement(new_query, &error , &cols , &affected_rows , &resultset,addresses[j],ports[j],max_failures,max_failures);
 				if (!error) {
 					if (resultset) {
 						if (resultset->rows_count) {
@@ -1802,7 +1807,6 @@ __end_monitor_ping_loop:
 				} else {
 					proxy_error("Error on %s : %s\n", query, error);
 				}
-				free(buff);
 			}
 
 			while (i) { // now free all the addresses/ports
@@ -1841,9 +1845,7 @@ __end_monitor_ping_loop:
 
 			new_query=(char *)"SELECT hostname,port,COALESCE(CAST(AVG(ping_success_time_us) AS INTEGER),10000) FROM (SELECT hostname,port,ping_success_time_us,ping_error FROM mysql_server_ping_log WHERE hostname='%s' AND port='%s' ORDER BY time_start_us DESC LIMIT 3) a WHERE ping_error IS NULL GROUP BY hostname,port";
 			for (j=0;j<i;j++) {
-				char *buff=(char *)malloc(strlen(new_query)+strlen(addresses[j])+strlen(ports[j])+16);
-				sprintf(buff,new_query,addresses[j],ports[j]);
-				monitordb->execute_statement(buff, &error , &cols , &affected_rows , &resultset);
+				monitordb->execute_statement(new_query, &error , &cols , &affected_rows , &resultset, addresses[j],ports[j]);
 				if (!error) {
 					if (resultset) {
 						if (resultset->rows_count) {
@@ -1857,9 +1859,8 @@ __end_monitor_ping_loop:
 						resultset=NULL;
 					}
 				} else {
-					proxy_error("Error on %s : %s\n", query, error);
+					proxy_error("Error on %s : %s\n", monitordb->get_last_query(), error);
 				}
-				free(buff);
 			}
 			while (i) { // now free all the addresses/ports
 				i--;
@@ -1902,10 +1903,8 @@ bool MySQL_Monitor::server_responds_to_ping(char *address, int port) {
 	SQLite3_result *resultset=NULL;
 	char *new_query=NULL;
 	new_query=(char *)"SELECT 1 FROM (SELECT hostname,port,ping_error FROM mysql_server_ping_log WHERE hostname='%s' AND port=%d ORDER BY time_start_us DESC LIMIT %d) a WHERE ping_error IS NOT NULL AND ping_error NOT LIKE 'Access denied for user%%' GROUP BY hostname,port HAVING COUNT(*)=%d";
-	char *buff=(char *)malloc(strlen(new_query)+strlen(address)+32);
 	int max_failures = mysql_thread___monitor_ping_max_failures;
-	sprintf(buff,new_query,address,port,max_failures,max_failures);
-	monitordb->execute_statement(buff, &error , &cols , &affected_rows , &resultset);
+	monitordb->execute_statement(new_query, &error, &cols, &affected_rows, &resultset, address, port, max_failures, max_failures);
 	if (!error) {
 		if (resultset) {
 			if (resultset->rows_count) {
@@ -1915,13 +1914,13 @@ bool MySQL_Monitor::server_responds_to_ping(char *address, int port) {
 			resultset=NULL;
 		}
 	} else {
-		proxy_error("Error on %s : %s\n", buff, error);
+		proxy_error("Error on %s : %s\n", monitordb->get_last_query(), error);
 	}
 	if (resultset) {
 		delete resultset;
 		resultset=NULL;
 	}
-	free(buff);
+
 	return ret;
 }
 

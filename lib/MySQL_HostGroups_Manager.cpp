@@ -627,6 +627,8 @@ static void * HGCU_thread_run() {
 		free(errs);
 		free(ret);
 	}
+
+	delete conn_array;
 }
 
 
@@ -1275,53 +1277,7 @@ bool MySQL_HostGroups_Manager::commit() {
 		SpookyHash myhash;
 		char buf[80];
 		bool init = false;
-/* removing all this code, because we need them ordered
-		MySrvC *mysrvc=NULL;
-		for (unsigned int i=0; i<MyHostGroups->len; i++) {
-			MyHGC *myhgc=(MyHGC *)MyHostGroups->index(i);
-			for (unsigned int j=0; j<myhgc->mysrvs->servers->len; j++) {
-				if (init == false) {
-					init = true;
-					myhash.Init(19,3);
-				}
-				mysrvc=myhgc->mysrvs->idx(j);
-				// hostgroup
-				sprintf(buf,"%u",mysrvc->myhgc->hid);
-				myhash.Update(buf,strlen(buf));
-				// hoatname
-				if (mysrvc->address) {
-					myhash.Update(mysrvc->address,strlen(mysrvc->address));
-				} else { myhash.Update("",0); }
-				// port
-				sprintf(buf,"%u",mysrvc->port);
-				myhash.Update(buf,strlen(buf));
-				// status
-				sprintf(buf,"%u",mysrvc->status);
-				myhash.Update(buf,strlen(buf));
-				// weight
-				sprintf(buf,"%u",mysrvc->weight);
-				myhash.Update(buf,strlen(buf));
-				// compression
-				sprintf(buf,"%u",mysrvc->compression);
-				myhash.Update(buf,strlen(buf));
-				// max_connections
-				sprintf(buf,"%u",mysrvc->max_connections);
-				myhash.Update(buf,strlen(buf));
-				// max_replication_lag
-				sprintf(buf,"%u",mysrvc->max_replication_lag);
-				myhash.Update(buf,strlen(buf));
-				// use_ssl
-				sprintf(buf,"%u",mysrvc->use_ssl);
-				myhash.Update(buf,strlen(buf));
-				// max_latency_ms
-				sprintf(buf,"%u",mysrvc->max_latency_us);
-				myhash.Update(buf,strlen(buf));
-				if (mysrvc->comment) {
-					myhash.Update(mysrvc->comment,strlen(mysrvc->comment));
-				} else { myhash.Update("",0); }
-			}
-		}
-*/
+
 		{
 			mydb->execute("DELETE FROM mysql_servers");
 			generate_mysql_servers_table();
@@ -1664,6 +1620,8 @@ void MySQL_HostGroups_Manager::generate_mysql_servers_table(int *_onlyhg) {
 		}
 		if (resultset) { delete resultset; resultset=NULL; }
 	}
+
+	delete lst;
 }
 
 void MySQL_HostGroups_Manager::generate_mysql_replication_hostgroups_table() {
@@ -2738,6 +2696,10 @@ void MySQL_HostGroups_Manager::read_only_action(char *hostname, int port, int re
 				// there is a server in writer hostgroup, let check the status of present and not present hosts
 				// this is the same query as Q1, but with a LEFT JOIN
 				wrlock();
+				if (resultset) {
+					delete resultset;
+					resultset = nullptr;
+				}
 				mydb->execute_statement(Q1B, &error , &cols , &affected_rows , &resultset, hostname, port, hostname, port);
 				wrunlock();
 				bool act=false;

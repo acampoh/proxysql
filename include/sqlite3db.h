@@ -179,14 +179,16 @@ class SQLite3DB {
 	uint32_t buffer_size;
 
 	void generate_querystring(const char* str, va_list);
+
 #ifdef PROXYSQL_SQLITE3DB_PTHREAD_MUTEX
 	pthread_rwlock_t rwlock;
 #else
 	rwlock_t rwlock;
 #endif
 	public:
-	char *get_url() const { return url; }
+	const char *get_url() const { return url; }
 	sqlite3 *get_db() const { return db; }
+	const char* get_last_query() const { return query_buffer; }
 	int assert_on_error;
 	SQLite3DB();
 	~SQLite3DB();

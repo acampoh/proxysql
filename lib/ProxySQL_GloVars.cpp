@@ -88,7 +88,7 @@ ProxySQL_GlobalVariables::ProxySQL_GlobalVariables() {
 	opt->syntax="proxysql [OPTIONS]";
 	std::string s = "\n\nProxySQL " ;
 	s = s + "rev. " + PROXYSQL_VERSION + " -- " + __TIMESTAMP__ + "\nCopyright (C) 2013-2018 ProxySQL LLC\nThis program is free and without warranty\n";
-	opt->footer =s.c_str();
+	opt->footer = s;
 
 	opt->add((const char *)"",0,0,0,(const char *)"Display usage instructions.",(const char *)"-h",(const char *)"-help",(const char *)"--help",(const char *)"--usage");
 	opt->add((const char *)"",0,0,0,(const char *)"Print version",(const char *)"-V",(const char *)"--version");
