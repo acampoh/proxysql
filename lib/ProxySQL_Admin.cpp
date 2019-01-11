@@ -1231,7 +1231,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_info("Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'sqliteserver-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'sqliteserver-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -1245,7 +1245,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_info("Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'sqliteserver-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'sqliteserver-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -1325,7 +1325,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_info("Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'clickhouse-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'clickhouse-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -1339,7 +1339,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_info("Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'clickhouse-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'clickhouse-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -1420,7 +1420,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_info("Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'mysql-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'mysql-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -1434,7 +1434,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_info("Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'mysql-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'mysql-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -1811,7 +1811,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_debug(PROXY_DEBUG_ADMIN, 4, "Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'admin-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO main.global_variables SELECT * FROM disk.global_variables WHERE variable_name LIKE 'admin-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -1825,7 +1825,7 @@ bool admin_handler_command_load_or_save(char *query_no_space, unsigned int query
 		) {
 			proxy_info("Received %s command\n", query_no_space);
 			l_free(*ql,*q);
-			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'admin-%'");
+			*q=l_strdup("INSERT OR REPLACE INTO disk.global_variables SELECT * FROM main.global_variables WHERE variable_name LIKE 'admin-%%'");
 			*ql=strlen(*q)+1;
 			return true;
 		}
@@ -2778,7 +2778,7 @@ void admin_session_handler(MySQL_Session *sess, void *_pa, PtrSize_t *pkt) {
 		}
 
 		if (strlen(query_no_space)==strlen("CHECKSUM DISK MYSQL VARIABLES") && !strncasecmp("CHECKSUM DISK MYSQL VARIABLES", query_no_space, strlen(query_no_space))){
-			char *q=(char *)"SELECT * FROM global_variables WHERE variable_name LIKE 'mysql-%' ORDER BY variable_name";
+			char *q=(char *)"SELECT * FROM global_variables WHERE variable_name LIKE 'mysql-%%' ORDER BY variable_name";
 			tablename=(char *)"MYSQL VARIABLES";
 			SPA->configdb->execute_statement(q, &error, &cols, &affected_rows, &resultset);
 		}
@@ -2824,7 +2824,7 @@ void admin_session_handler(MySQL_Session *sess, void *_pa, PtrSize_t *pkt) {
 		(strlen(query_no_space)==strlen("CHECKSUM MEM MYSQL VARIABLES") && !strncasecmp("CHECKSUM MEM MYSQL VARIABLES", query_no_space, strlen(query_no_space)))
 		||
 		(strlen(query_no_space)==strlen("CHECKSUM MYSQL VARIABLES") && !strncasecmp("CHECKSUM MYSQL VARIABLES", query_no_space, strlen(query_no_space)))){
-			char *q=(char *)"SELECT * FROM global_variables WHERE variable_name LIKE 'mysql-%' ORDER BY variable_name";
+			char *q=(char *)"SELECT * FROM global_variables WHERE variable_name LIKE 'mysql-%%' ORDER BY variable_name";
 			tablename=(char *)"MYSQL VARIABLES";
 			SPA->admindb->execute_statement(q, &error, &cols, &affected_rows, &resultset);
 		}
@@ -3889,12 +3889,10 @@ ProxySQL_Admin::~ProxySQL_Admin() {
 // it is mostly informative
 void ProxySQL_Admin::dump_mysql_collations() {
 	const MARIADB_CHARSET_INFO * c = mariadb_compiled_charsets;
-	char buf[1024];
 	char *query=(char *)"INSERT INTO mysql_collations VALUES (%d, \"%s\", \"%s\", \"\")";
 	admindb->execute("DELETE FROM mysql_collations");
 	do {
-		sprintf(buf,query,c->nr, c->name, c->csname);
-		admindb->execute(buf);
+		admindb->execute(query, c->nr, c->name, c->csname);
 		++c;
 	} while (c[0].nr != 0);
 	admindb->execute("INSERT OR REPLACE INTO mysql_collations SELECT Id, Collation, Charset, 'Yes' FROM mysql_collations JOIN (SELECT MIN(Id) minid FROM mysql_collations GROUP BY Charset) t ON t.minid=mysql_collations.Id");
@@ -3943,7 +3941,7 @@ void ProxySQL_Admin::flush_admin_variables___database_to_runtime(SQLite3DB *db, 
 	int cols=0;
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
-	char *q=(char *)"SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'admin-%%'";
+	const char *q = "SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'admin-%%'";
 	admindb->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 	if (error) {
 		proxy_error("Error on %s : %s\n", q, error);
@@ -3957,22 +3955,19 @@ void ProxySQL_Admin::flush_admin_variables___database_to_runtime(SQLite3DB *db, 
 				proxy_debug(PROXY_DEBUG_ADMIN, 4, "Impossible to set variable %s with value \"%s\"\n", r->fields[0],r->fields[1]);
 				if (replace) {
 					char *val=get_variable(r->fields[0]);
-					char q[1000];
 					if (val) {
 						if (strcmp(r->fields[0],(char *)"version")) {
 							proxy_warning("Impossible to set variable %s with value \"%s\". Resetting to current \"%s\".\n", r->fields[0],r->fields[1], val);
 						}
-						sprintf(q,"INSERT OR REPLACE INTO global_variables VALUES(\"admin-%s\",\"%s\")",r->fields[0],val);
-						db->execute(q);
+						db->execute("INSERT OR REPLACE INTO global_variables VALUES(\"admin-%s\",\"%s\")",r->fields[0],val);
 					} else {
 						if (strcmp(r->fields[0],(char *)"debug")==0) {
-							sprintf(q,"DELETE FROM disk.global_variables WHERE variable_name=\"admin-%s\"",r->fields[0]);
-							db->execute(q);
+							db->execute("DELETE FROM disk.global_variables WHERE variable_name=\"admin-%s\"",r->fields[0]);
 						} else {
 							proxy_warning("Impossible to set not existing variable %s with value \"%s\". Deleting. If the variable name is correct, this version doesn't support it\n", r->fields[0],r->fields[1]);
 						}
-						sprintf(q,"DELETE FROM global_variables WHERE variable_name=\"admin-%s\"",r->fields[0]);
-						db->execute(q);
+
+						db->execute("DELETE FROM global_variables WHERE variable_name=\"admin-%s\"",r->fields[0]);
 					}
 				}
 			} else {
@@ -4023,7 +4018,7 @@ void ProxySQL_Admin::flush_mysql_variables___database_to_runtime(SQLite3DB *db, 
 	int cols=0;
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
-	char *q=(char *)"SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'mysql-%%'";
+	const char *q = "SELECT substr(variable_name,7) vn, variable_value FROM global_variables WHERE variable_name LIKE 'mysql-%%'";
 	admindb->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 	if (error) {
 		proxy_error("Error on %s : %s\n", q, error);
@@ -4037,23 +4032,19 @@ void ProxySQL_Admin::flush_mysql_variables___database_to_runtime(SQLite3DB *db, 
 				proxy_debug(PROXY_DEBUG_ADMIN, 4, "Impossible to set variable %s with value \"%s\"\n", r->fields[0],r->fields[1]);
 				if (replace) {
 					char *val=GloMTH->get_variable(r->fields[0]);
-					char q[1000];
 					if (val) {
 						if (strcmp(val,r->fields[1])) {
 							proxy_warning("Impossible to set variable %s with value \"%s\". Resetting to current \"%s\".\n", r->fields[0],r->fields[1], val);
-							sprintf(q,"INSERT OR REPLACE INTO global_variables VALUES(\"mysql-%s\",\"%s\")",r->fields[0],val);
-							db->execute(q);
+							db->execute("INSERT OR REPLACE INTO global_variables VALUES(\"mysql-%s\",\"%s\")",r->fields[0],val);
 						}
 						free(val);
 					} else {
 						if (strcmp(r->fields[0],(char *)"session_debug")==0) {
-							sprintf(q,"DELETE FROM disk.global_variables WHERE variable_name=\"mysql-%s\"",r->fields[0]);
-							db->execute(q);
+							db->execute("DELETE FROM disk.global_variables WHERE variable_name=\"mysql-%s\"",r->fields[0]);
 						} else {
 							proxy_warning("Impossible to set not existing variable %s with value \"%s\". Deleting. If the variable name is correct, this version doesn't support it\n", r->fields[0],r->fields[1]);
 						}
-						sprintf(q,"DELETE FROM global_variables WHERE variable_name=\"mysql-%s\"",r->fields[0]);
-						db->execute(q);
+						db->execute("DELETE FROM global_variables WHERE variable_name=\"mysql-%s\"",r->fields[0]);
 					}
 				}
 			} else {
@@ -4079,7 +4070,7 @@ void ProxySQL_Admin::flush_sqliteserver_variables___database_to_runtime(SQLite3D
 	int cols=0;
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
-	char *q=(char *)"SELECT substr(variable_name,14) vn, variable_value FROM global_variables WHERE variable_name LIKE 'sqliteserver-%'";
+	const char *q = "SELECT substr(variable_name,14) vn, variable_value FROM global_variables WHERE variable_name LIKE 'sqliteserver-%%'";
 	admindb->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 	if (error) {
 		proxy_error("Error on %s : %s\n", q, error);
@@ -4093,23 +4084,19 @@ void ProxySQL_Admin::flush_sqliteserver_variables___database_to_runtime(SQLite3D
 				proxy_debug(PROXY_DEBUG_ADMIN, 4, "Impossible to set variable %s with value \"%s\"\n", r->fields[0],r->fields[1]);
 				if (replace) {
 					char *val=GloSQLite3Server->get_variable(r->fields[0]);
-					char q[1000];
 					if (val) {
 						if (strcmp(val,r->fields[1])) {
 							proxy_warning("Impossible to set variable %s with value \"%s\". Resetting to current \"%s\".\n", r->fields[0],r->fields[1], val);
-							sprintf(q,"INSERT OR REPLACE INTO global_variables VALUES(\"sqliteserver-%s\",\"%s\")",r->fields[0],val);
-							db->execute(q);
+							db->execute("INSERT OR REPLACE INTO global_variables VALUES(\"sqliteserver-%s\",\"%s\")",r->fields[0],val);
 						}
 						free(val);
 					} else {
 						if (strcmp(r->fields[0],(char *)"session_debug")==0) {
-							sprintf(q,"DELETE FROM disk.global_variables WHERE variable_name=\"sqliteserver-%s\"",r->fields[0]);
-							db->execute(q);
+							db->execute("DELETE FROM disk.global_variables WHERE variable_name=\"sqliteserver-%s\"",r->fields[0]);
 						} else {
 							proxy_warning("Impossible to set not existing variable %s with value \"%s\". Deleting. If the variable name is correct, this version doesn't support it\n", r->fields[0],r->fields[1]);
 						}
-						sprintf(q,"DELETE FROM global_variables WHERE variable_name=\"sqliteserver-%s\"",r->fields[0]);
-						db->execute(q);
+						db->execute("DELETE FROM global_variables WHERE variable_name=\"sqliteserver-%s\"",r->fields[0]);
 					}
 				}
 			} else {
@@ -4132,7 +4119,7 @@ void ProxySQL_Admin::flush_sqliteserver_variables___runtime_to_database(SQLite3D
 	  int cols=0;
 	  int affected_rows=0;
 	  SQLite3_result *resultset=NULL;
-	  char *q=(char *)"SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'sqliteserver-%'";
+	  char *q=(char *)"SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'sqliteserver-%%'";
 	  db->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 		int matching_rows=0;
 		if (error) {
@@ -4152,35 +4139,31 @@ void ProxySQL_Admin::flush_sqliteserver_variables___runtime_to_database(SQLite3D
 	}
 	if (del) {
 		proxy_debug(PROXY_DEBUG_ADMIN, 4, "Deleting ClickHouse variables from global_variables\n");
-		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'sqliteserver-%'");
+		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'sqliteserver-%%'");
 	}
 	if (runtime) {
-		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'sqliteserver-%'");
+		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'sqliteserver-%%'");
 	}
-	char *a;
-	char *b=(char *)"INSERT INTO runtime_global_variables(variable_name, variable_value) VALUES(\"sqliteserver-%s\",\"%s\")";
-  if (replace) {
-    a=(char *)"REPLACE INTO global_variables(variable_name, variable_value) VALUES(\"sqliteserver-%s\",\"%s\")";
-  } else {
-    a=(char *)"INSERT OR IGNORE INTO global_variables(variable_name, variable_value) VALUES(\"sqliteserver-%s\",\"%s\")";
-  }
-  int l=strlen(a)+200;
+	const char *a;
+	const char *b = "INSERT INTO runtime_global_variables(variable_name, variable_value) VALUES(\"sqliteserver-%s\",\"%s\")";
+	if (replace) {
+		a = "REPLACE INTO global_variables(variable_name, variable_value) VALUES(\"sqliteserver-%s\",\"%s\")";
+	} else {
+		a = "INSERT OR IGNORE INTO global_variables(variable_name, variable_value) VALUES(\"sqliteserver-%s\",\"%s\")";
+	}
+
 	GloSQLite3Server->wrlock();
 	char **varnames=GloSQLite3Server->get_variables_list();
 	for (int i=0; varnames[i]; i++) {
-		char *val=GloSQLite3Server->get_variable(varnames[i]);
-		l+=( varnames[i] ? strlen(varnames[i]) : 6);
-		l+=( val ? strlen(val) : 6);
-		char *query=(char *)malloc(l);
-		sprintf(query, a, varnames[i], val);
+		char *val = GloSQLite3Server->get_variable(varnames[i]);
+		db->execute(a, varnames[i], val);
 		if (runtime) {
-			db->execute(query);
-			sprintf(query, b, varnames[i], val);
+			db->execute(b, varnames[i], val);
 		}
-		db->execute(query);
-		if (val)
+
+		if (val) {
 			free(val);
-		free(query);
+		}
 	}
 	GloSQLite3Server->wrunlock();
 	for (int i=0; varnames[i]; i++) {
@@ -4204,7 +4187,7 @@ void ProxySQL_Admin::flush_clickhouse_variables___database_to_runtime(SQLite3DB 
 	int cols=0;
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
-	char *q=(char *)"SELECT substr(variable_name,12) vn, variable_value FROM global_variables WHERE variable_name LIKE 'clickhouse-%'";
+	const char *q = "SELECT substr(variable_name,12) vn, variable_value FROM global_variables WHERE variable_name LIKE 'clickhouse-%%'";
 	admindb->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 	if (error) {
 		proxy_error("Error on %s : %s\n", q, error);
@@ -4218,23 +4201,20 @@ void ProxySQL_Admin::flush_clickhouse_variables___database_to_runtime(SQLite3DB 
 				proxy_debug(PROXY_DEBUG_ADMIN, 4, "Impossible to set variable %s with value \"%s\"\n", r->fields[0],r->fields[1]);
 				if (replace) {
 					char *val=GloClickHouseServer->get_variable(r->fields[0]);
-					char q[1000];
 					if (val) {
 						if (strcmp(val,r->fields[1])) {
 							proxy_warning("Impossible to set variable %s with value \"%s\". Resetting to current \"%s\".\n", r->fields[0],r->fields[1], val);
-							sprintf(q,"INSERT OR REPLACE INTO global_variables VALUES(\"clickhouse-%s\",\"%s\")",r->fields[0],val);
-							db->execute(q);
+							db->execute("INSERT OR REPLACE INTO global_variables VALUES(\"clickhouse-%s\",\"%s\")",r->fields[0],val);
 						}
 						free(val);
 					} else {
 						if (strcmp(r->fields[0],(char *)"session_debug")==0) {
-							sprintf(q,"DELETE FROM disk.global_variables WHERE variable_name=\"clickhouse-%s\"",r->fields[0]);
-							db->execute(q);
+							db->execute("DELETE FROM disk.global_variables WHERE variable_name=\"clickhouse-%s\"",r->fields[0]);
 						} else {
 							proxy_warning("Impossible to set not existing variable %s with value \"%s\". Deleting. If the variable name is correct, this version doesn't support it\n", r->fields[0],r->fields[1]);
 						}
-						sprintf(q,"DELETE FROM global_variables WHERE variable_name=\"clickhouse-%s\"",r->fields[0]);
-						db->execute(q);
+
+						db->execute("DELETE FROM global_variables WHERE variable_name=\"clickhouse-%s\"",r->fields[0]);
 					}
 				}
 			} else {
@@ -4257,7 +4237,7 @@ void ProxySQL_Admin::flush_clickhouse_variables___runtime_to_database(SQLite3DB 
 	  int cols=0;
 	  int affected_rows=0;
 	  SQLite3_result *resultset=NULL;
-	  char *q=(char *)"SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'clickhouse-%'";
+	  const char *q = "SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'clickhouse-%%'";
 	  db->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 		int matching_rows=0;
 		if (error) {
@@ -4277,37 +4257,34 @@ void ProxySQL_Admin::flush_clickhouse_variables___runtime_to_database(SQLite3DB 
 	}
 	if (del) {
 		proxy_debug(PROXY_DEBUG_ADMIN, 4, "Deleting ClickHouse variables from global_variables\n");
-		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'clickhouse-%'");
+		db->execute("DELETE FROM global_variables WHERE variable_name LIKE 'clickhouse-%%'");
 	}
 	if (runtime) {
-		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'clickhouse-%'");
+		db->execute("DELETE FROM runtime_global_variables WHERE variable_name LIKE 'clickhouse-%%'");
 	}
-	char *a;
-	char *b=(char *)"INSERT INTO runtime_global_variables(variable_name, variable_value) VALUES(\"clickhouse-%s\",\"%s\")";
+	const char *a;
+	const char *b = "INSERT INTO runtime_global_variables(variable_name, variable_value) VALUES(\"clickhouse-%s\",\"%s\")";
   if (replace) {
-    a=(char *)"REPLACE INTO global_variables(variable_name, variable_value) VALUES(\"clickhouse-%s\",\"%s\")";
+    a = "REPLACE INTO global_variables(variable_name, variable_value) VALUES(\"clickhouse-%s\",\"%s\")";
   } else {
-    a=(char *)"INSERT OR IGNORE INTO global_variables(variable_name, variable_value) VALUES(\"clickhouse-%s\",\"%s\")";
+    a = "INSERT OR IGNORE INTO global_variables(variable_name, variable_value) VALUES(\"clickhouse-%s\",\"%s\")";
   }
-  int l=strlen(a)+200;
 	GloClickHouseServer->wrlock();
 	char **varnames=GloClickHouseServer->get_variables_list();
 	for (int i=0; varnames[i]; i++) {
 		char *val=GloClickHouseServer->get_variable(varnames[i]);
-		l+=( varnames[i] ? strlen(varnames[i]) : 6);
-		l+=( val ? strlen(val) : 6);
-		char *query=(char *)malloc(l);
-		sprintf(query, a, varnames[i], val);
+		db->execute(a, varnames[i], val);
 		if (runtime) {
-			db->execute(query);
-			sprintf(query, b, varnames[i], val);
+			db->execute(b, varnames[i], val);
 		}
-		db->execute(query);
-		if (val)
+
+		if (val) {
 			free(val);
-		free(query);
+		}
 	}
+
 	GloClickHouseServer->wrunlock();
+
 	for (int i=0; varnames[i]; i++) {
 		free(varnames[i]);
 	}
@@ -4322,7 +4299,7 @@ void ProxySQL_Admin::flush_mysql_variables___runtime_to_database(SQLite3DB *db, 
 		int cols=0;
 		int affected_rows=0;
 		SQLite3_result *resultset=NULL;
-		char *q=(char *)"SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'mysql-%'";
+		char *q=(char *)"SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'mysql-%%'";
 		db->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 		int matching_rows=0;
 		if (error) {
@@ -5087,8 +5064,7 @@ void ProxySQL_Admin::stats___memory_metrics() {
 	int highwater;
 	int current;
 	char bu[32];
-	char *vn=NULL;
-	char *query=NULL;
+
 	statsdb->execute("BEGIN");
 	statsdb->execute("DELETE FROM stats_memory_metrics");
 	char *a=(char *)"INSERT INTO stats_memory_metrics VALUES (\"%s\",\"%s\")";
@@ -5097,12 +5073,9 @@ void ProxySQL_Admin::stats___memory_metrics() {
 		resultset=NULL;
 	}
 	sqlite3_status(SQLITE_STATUS_MEMORY_USED, &current, &highwater, 0);
-	vn=(char *)"SQLite3_memory_bytes";
+	const char* vn = "SQLite3_memory_bytes";
 	sprintf(bu,"%d",current);
-	query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-	sprintf(query,a,vn,bu);
-	statsdb->execute(query);
-	free(query);
+	statsdb->execute(a,vn,bu);
 #ifndef NOJEM
 	{
 		uint64_t epoch = 1;
@@ -5114,47 +5087,30 @@ void ProxySQL_Admin::stats___memory_metrics() {
 		mallctl("stats.mapped", &mapped, &sz, NULL, 0);
 		mallctl("stats.metadata", &metadata, &sz, NULL, 0);
 		mallctl("stats.retained", &retained, &sz, NULL, 0);
-//		float frag_pct = ((float)active / allocated)*100 - 100;
-//		size_t frag_bytes = active - allocated;
-//		float rss_pct = ((float)resident / allocated)*100 - 100;
-//		size_t rss_bytes = resident - allocated;
-//		float metadata_pct = ((float)metadata / resident)*100;
+
 		vn=(char *)"jemalloc_resident";
 		sprintf(bu,"%lu",resident);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"jemalloc_active";
 		sprintf(bu,"%lu",active);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"jemalloc_allocated";
 		sprintf(bu,"%lu",allocated);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"jemalloc_mapped";
 		sprintf(bu,"%lu",mapped);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"jemalloc_metadata";
 		sprintf(bu,"%lu",metadata);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"jemalloc_retained";
 		sprintf(bu,"%lu",retained);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
 	}
 #endif
 	{
@@ -5162,10 +5118,7 @@ void ProxySQL_Admin::stats___memory_metrics() {
 			unsigned long mu = GloMyAuth->memory_usage();
 			vn=(char *)"Auth_memory";
 			sprintf(bu,"%lu",mu);
-			query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-			sprintf(query,a,vn,bu);
-			statsdb->execute(query);
-			free(query);
+			statsdb->execute(a,vn,bu);
 		}
 	}
 	{
@@ -5173,10 +5126,7 @@ void ProxySQL_Admin::stats___memory_metrics() {
 			unsigned long mu = GloQPro->get_query_digests_total_size();
 			vn=(char *)"query_digest_memory";
 			sprintf(bu,"%lu",mu);
-			query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-			sprintf(query,a,vn,bu);
-			statsdb->execute(query);
-			free(query);
+			statsdb->execute(a,vn,bu);
 		}
 	}
 	{
@@ -5184,24 +5134,18 @@ void ProxySQL_Admin::stats___memory_metrics() {
 		mu =  __sync_fetch_and_add(&GloVars.statuses.stack_memory_mysql_threads,0);
 		vn=(char *)"stack_memory_mysql_threads";
 		sprintf(bu,"%lu",mu);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		mu =  __sync_fetch_and_add(&GloVars.statuses.stack_memory_admin_threads,0);
 		vn=(char *)"stack_memory_admin_threads";
 		sprintf(bu,"%lu",mu);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		mu =  __sync_fetch_and_add(&GloVars.statuses.stack_memory_cluster_threads,0);
 		vn=(char *)"stack_memory_cluster_threads";
 		sprintf(bu,"%lu",mu);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 	}
 	statsdb->execute("COMMIT");
 }
@@ -5219,10 +5163,8 @@ void ProxySQL_Admin::stats___mysql_global() {
 		for (int i=0; i<2; i++) {
 			arg_len+=strlen(r->fields[i]);
 		}
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
-		sprintf(query,a,r->fields[0],r->fields[1]);
-		statsdb->execute(query);
-		free(query);
+
+		statsdb->execute(a,r->fields[0],r->fields[1]);
 	}
 	delete resultset;
 	resultset=NULL;
@@ -5235,10 +5177,8 @@ void ProxySQL_Admin::stats___mysql_global() {
 			for (int i=0; i<2; i++) {
 				arg_len+=strlen(r->fields[i]);
 			}
-			char *query=(char *)malloc(strlen(a)+arg_len+32);
-			sprintf(query,a,r->fields[0],r->fields[1]);
-			statsdb->execute(query);
-			free(query);
+
+			statsdb->execute(a,r->fields[0],r->fields[1]);
 		}
 		delete resultset;
 		resultset=NULL;
@@ -5249,21 +5189,14 @@ void ProxySQL_Admin::stats___mysql_global() {
 	sqlite3_status(SQLITE_STATUS_MEMORY_USED, &current, &highwater, 0);
 	char bu[32];
 	char *vn=NULL;
-	char *query=NULL;
 	vn=(char *)"SQLite3_memory_bytes";
 	sprintf(bu,"%d",current);
-	query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-	sprintf(query,a,vn,bu);
-	statsdb->execute(query);
-	free(query);
+	statsdb->execute(a,vn,bu);
 
 	unsigned long long connpool_mem=MyHGM->Get_Memory_Stats();
 	vn=(char *)"ConnPool_memory_bytes";
 	sprintf(bu,"%llu",connpool_mem);
-	query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-	sprintf(query,a,vn,bu);
-	statsdb->execute(query);
-	free(query);
+	statsdb->execute(a,vn,bu);
 
 	if (GloMyStmt) {
 		uint64_t stmt_client_active_unique = 0;
@@ -5275,40 +5208,27 @@ void ProxySQL_Admin::stats___mysql_global() {
 		GloMyStmt->get_metrics(&stmt_client_active_unique,&stmt_client_active_total,&stmt_max_stmt_id,&stmt_cached,&stmt_server_active_unique,&stmt_server_active_total);
 		vn=(char *)"Stmt_Client_Active_Total";
 		sprintf(bu,"%lu",stmt_client_active_total);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"Stmt_Client_Active_Unique";
 		sprintf(bu,"%lu",stmt_client_active_unique);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"Stmt_Server_Active_Total";
 		sprintf(bu,"%lu",stmt_server_active_total);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"Stmt_Server_Active_Unique";
 		sprintf(bu,"%lu",stmt_server_active_unique);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"Stmt_Max_Stmt_id";
 		sprintf(bu,"%lu",stmt_max_stmt_id);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
+
 		vn=(char *)"Stmt_Cached";
 		sprintf(bu,"%lu",stmt_cached);
-		query=(char *)malloc(strlen(a)+strlen(vn)+strlen(bu)+16);
-		sprintf(query,a,vn,bu);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,vn,bu);
 	}
 
 	resultset=GloQC->SQL3_getStats();
@@ -5319,10 +5239,8 @@ void ProxySQL_Admin::stats___mysql_global() {
 			for (int i=0; i<2; i++) {
 				arg_len+=strlen(r->fields[i]);
 			}
-			char *query=(char *)malloc(strlen(a)+arg_len+32);
-			sprintf(query,a,r->fields[0],r->fields[1]);
-			statsdb->execute(query);
-			free(query);
+
+			statsdb->execute(a,r->fields[0],r->fields[1]);
 		}
 		delete resultset;
 		resultset=NULL;
@@ -5340,36 +5258,29 @@ void ProxySQL_Admin::stats___mysql_processlist() {
 	char *a=(char *)"INSERT INTO stats_mysql_processlist VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')";
 	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
 		SQLite3_row *r=*it;
-		int arg_len=0;
+
 		char *o_info=NULL;
-		for (int i=0; i<13; i++) { // info (field 13) is left out! See #746
-			if (r->fields[i])
-				arg_len+=strlen(r->fields[i]);
-		}
 		if (r->fields[13]) { // this is just for info column (field 13) . See #746
 			o_info=escape_string_single_quotes(r->fields[13],false);
-			int l=strlen(o_info)+4;
-			arg_len+=l;
 		}
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
-		sprintf(query,a,
-			(r->fields[0] ? r->fields[0] : ""),
-			(r->fields[1] ? r->fields[1] : ""),
-			(r->fields[2] ? r->fields[2] : ""),
-			(r->fields[3] ? r->fields[3] : ""),
-			(r->fields[4] ? r->fields[4] : ""),
-			(r->fields[5] ? r->fields[5] : ""),
-			(r->fields[6] ? r->fields[6] : ""),
-			(r->fields[7] ? r->fields[7] : ""),
-			(r->fields[8] ? r->fields[8] : ""),
-			(r->fields[9] ? r->fields[9] : ""),
-			(r->fields[10] ? r->fields[10] : ""),
-			(r->fields[11] ? r->fields[11] : ""),
-			(r->fields[12] ? r->fields[12] : ""),
-			(r->fields[13] ? o_info : "")
-		);
-		statsdb->execute(query);
-		free(query);
+
+		statsdb->execute(a,
+				(r->fields[0] ? r->fields[0] : ""),
+				(r->fields[1] ? r->fields[1] : ""),
+				(r->fields[2] ? r->fields[2] : ""),
+				(r->fields[3] ? r->fields[3] : ""),
+				(r->fields[4] ? r->fields[4] : ""),
+				(r->fields[5] ? r->fields[5] : ""),
+				(r->fields[6] ? r->fields[6] : ""),
+				(r->fields[7] ? r->fields[7] : ""),
+				(r->fields[8] ? r->fields[8] : ""),
+				(r->fields[9] ? r->fields[9] : ""),
+				(r->fields[10] ? r->fields[10] : ""),
+				(r->fields[11] ? r->fields[11] : ""),
+				(r->fields[12] ? r->fields[12] : ""),
+				(r->fields[13] ? o_info : "")
+			);
+
 		if (o_info) {
 			if (o_info!=r->fields[13]) { // there was a copy
 				free(o_info);
@@ -5390,15 +5301,9 @@ void ProxySQL_Admin::stats___mysql_connection_pool(bool _reset) {
 	char *a=(char *)"INSERT INTO stats_mysql_connection_pool VALUES (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")";
 	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
 		SQLite3_row *r=*it;
-		int arg_len=0;
-		for (int i=0; i<14; i++) {
-			arg_len+=strlen(r->fields[i]);
-		}
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
-		sprintf(query,a,r->fields[0],r->fields[1],r->fields[2],r->fields[3],r->fields[4],r->fields[5],r->fields[6],r->fields[7],r->fields[8],r->fields[9],r->fields[10],r->fields[11],r->fields[12],r->fields[13]);
-		statsdb->execute(query);
-		free(query);
+		statsdb->execute(a,r->fields[0],r->fields[1],r->fields[2],r->fields[3],r->fields[4],r->fields[5],r->fields[6],r->fields[7],r->fields[8],r->fields[9],r->fields[10],r->fields[11],r->fields[12],r->fields[13]);
 	}
+
 	if (_reset) {
 		statsdb->execute("DELETE FROM stats_mysql_connection_pool_reset");
 		statsdb->execute("INSERT INTO stats_mysql_connection_pool_reset SELECT * FROM stats_mysql_connection_pool");
@@ -5416,14 +5321,8 @@ void ProxySQL_Admin::stats___mysql_commands_counters() {
 	char *a=(char *)"INSERT INTO stats_mysql_commands_counters VALUES (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")";
 	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
 		SQLite3_row *r=*it;
-		int arg_len=0;
-		for (int i=0; i<15; i++) {
-			arg_len+=strlen(r->fields[i]);
-		}
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
-		sprintf(query,a,r->fields[0],r->fields[1],r->fields[2],r->fields[3],r->fields[4],r->fields[5],r->fields[6],r->fields[7],r->fields[8],r->fields[9],r->fields[10],r->fields[11],r->fields[12],r->fields[13],r->fields[14]);
-		statsdb->execute(query);
-		free(query);
+
+		statsdb->execute(a,r->fields[0],r->fields[1],r->fields[2],r->fields[3],r->fields[4],r->fields[5],r->fields[6],r->fields[7],r->fields[8],r->fields[9],r->fields[10],r->fields[11],r->fields[12],r->fields[13],r->fields[14]);
 	}
 	statsdb->execute("COMMIT");
 	delete resultset;
@@ -5438,14 +5337,8 @@ void ProxySQL_Admin::stats___mysql_query_rules() {
 	char *a=(char *)"INSERT INTO stats_mysql_query_rules VALUES (\"%s\",\"%s\")";
 	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
 		SQLite3_row *r=*it;
-		int arg_len=0;
-		for (int i=0; i<2; i++) {
-			arg_len+=strlen(r->fields[i]);
-		}
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
-		sprintf(query,a,r->fields[0],r->fields[1]);
-		statsdb->execute(query);
-		free(query);
+
+		statsdb->execute(a,r->fields[0],r->fields[1]);
 	}
 	statsdb->execute("COMMIT");
 	delete resultset;
@@ -5606,13 +5499,7 @@ void ProxySQL_Admin::stats___mysql_query_digests(bool reset) {
 	}
 	sqlite3_finalize(statement1);
 	sqlite3_finalize(statement32);
-/*
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
-		sprintf(query,a,r->fields[10],r->fields[0],r->fields[1],r->fields[2],r->fields[3],r->fields[4],r->fields[5],r->fields[6],r->fields[7],r->fields[8],r->fields[9]);
-		statsdb->execute(query);
-		free(query);
-	}
-*/
+
 	statsdb->execute("COMMIT");
 	delete resultset;
 }
@@ -5698,30 +5585,6 @@ void ProxySQL_Admin::stats___mysql_errors(bool reset) {
 	delete resultset;
 }
 
-/*
-void ProxySQL_Admin::stats___mysql_query_digests_reset() {
-	if (!GloQPro) return;
-	SQLite3_result * resultset=GloQPro->get_query_digests_reset();
-	if (resultset==NULL) return;
-	statsdb->execute("BEGIN");
-	statsdb->execute("DELETE FROM stats_mysql_query_digest_reset");
-	char *a=(char *)"INSERT INTO stats_mysql_query_digest_reset VALUES (%s,\"%s\",\"%s\",\"%s\",\"%s\",%s,%s,%s,%s,%s,%s)";
-	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
-		SQLite3_row *r=*it;
-		int arg_len=0;
-		for (int i=0; i<11; i++) {
-			arg_len+=strlen(r->fields[i]);
-		}
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
-		sprintf(query,a,r->fields[10],r->fields[0],r->fields[1],r->fields[2],r->fields[3],r->fields[4],r->fields[5],r->fields[6],r->fields[7],r->fields[8],r->fields[9]);
-		statsdb->execute(query);
-		free(query);
-	}
-	statsdb->execute("COMMIT");
-	delete resultset;
-}
-*/
-
 void ProxySQL_Admin::save_mysql_query_rules_fast_routing_from_runtime(bool _runtime) {
 	if (_runtime) {
 		admindb->execute("DELETE FROM runtime_mysql_query_rules_fast_routing");
@@ -5800,70 +5663,64 @@ void ProxySQL_Admin::save_mysql_query_rules_from_runtime(bool _runtime) {
 	}
 	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
 		SQLite3_row *r=*it;
-		int arg_len=0;
+
 		char *buffs[34]; // number of fields
 		for (int i=0; i<34; i++) {
 			if (r->fields[i]) {
-				char *o=escape_string_single_quotes(r->fields[i],false);
-				int l=strlen(o)+4;
-				arg_len+=l;
-				buffs[i]=(char *)malloc(l);
+				char *o = escape_string_single_quotes(r->fields[i],false);
+				int l = strlen(o)+4;
+
+				buffs[i] = (char *)malloc(l);
 				sprintf(buffs[i],"'%s'",o);
-				if (o!=r->fields[i]) { // there was a copy
+				if (o != r->fields[i]) { // there was a copy
 					free(o);
 				}
 			} else {
-				int l=9;
-				arg_len+=l;
-				buffs[i]=(char *)malloc(l);
-				sprintf(buffs[i],"NULL");
+				buffs[i] = "NULL";
 			}
 		}
-		char *query=(char *)malloc(strlen(a)+arg_len+32);
 
-		sprintf(query,a,
-			buffs[0],
-			buffs[1],
-			buffs[2],
-			buffs[3],
-			( strcmp(r->fields[4],"-1")==0 ? "NULL" : r->fields[4] ), // flagIN
-			buffs[5],	// client_addr
-			buffs[6],	// proxy_addr
-			( strcmp(r->fields[7],"-1")==0 ? "NULL" : r->fields[7] ), // proxy_port
-			buffs[8],	// digest
-			buffs[9], // match_digest
-			buffs[10], // match_pattern
-			r->fields[11], // negate
-      buffs[12], // re_modifiers
-			( strcmp(r->fields[13],"-1")==0 ? "NULL" : r->fields[13] ), // flagOUT
-			buffs[14], // replace_pattern
-			( strcmp(r->fields[15],"-1")==0 ? "NULL" : r->fields[15] ), // destination_hostgroup
-			( strcmp(r->fields[16],"-1")==0 ? "NULL" : r->fields[16] ), // cache_ttl
-			( strcmp(r->fields[17],"-1")==0 ? "NULL" : r->fields[17] ), // cache_empty_result
-			( strcmp(r->fields[18],"-1")==0 ? "NULL" : r->fields[18] ), // cache_timeout
-			( strcmp(r->fields[19],"-1")==0 ? "NULL" : r->fields[19] ), // reconnect
-			( strcmp(r->fields[20],"-1")==0 ? "NULL" : r->fields[20] ), // timeout
-			( strcmp(r->fields[21],"-1")==0 ? "NULL" : r->fields[21] ), // retries
-			( strcmp(r->fields[22],"-1")==0 ? "NULL" : r->fields[22] ), // delay
-			( strcmp(r->fields[23],"-1")==0 ? "NULL" : r->fields[23] ), // next_query_flagIN
-			( strcmp(r->fields[24],"-1")==0 ? "NULL" : r->fields[24] ), // mirror_flagOUT
-			( strcmp(r->fields[25],"-1")==0 ? "NULL" : r->fields[25] ), // mirror_hostgroup
-			buffs[26], // error_msg
-			buffs[27], // OK_msg
-			( strcmp(r->fields[28],"-1")==0 ? "NULL" : r->fields[28] ), // sticky_conn
-			( strcmp(r->fields[29],"-1")==0 ? "NULL" : r->fields[29] ), // multiplex
-			( strcmp(r->fields[30],"-1")==0 ? "NULL" : r->fields[30] ), // gtid_from_hostgroup
-			( strcmp(r->fields[31],"-1")==0 ? "NULL" : r->fields[31] ), // log
-			( strcmp(r->fields[32],"-1")==0 ? "NULL" : r->fields[32] ), // apply
-			buffs[33] // comment
-		);
-		//fprintf(stderr,"%s\n",query);
-		admindb->execute(query);
+		admindb->execute(a,
+				buffs[0],
+				buffs[1],
+				buffs[2],
+				buffs[3],
+				( strcmp(r->fields[4],"-1")==0 ? "NULL" : r->fields[4] ), // flagIN
+				buffs[5],	// client_addr
+				buffs[6],	// proxy_addr
+				( strcmp(r->fields[7],"-1")==0 ? "NULL" : r->fields[7] ), // proxy_port
+				buffs[8],	// digest
+				buffs[9], // match_digest
+				buffs[10], // match_pattern
+				r->fields[11], // negate
+				buffs[12], // re_modifiers
+				( strcmp(r->fields[13],"-1")==0 ? "NULL" : r->fields[13] ), // flagOUT
+				buffs[14], // replace_pattern
+				( strcmp(r->fields[15],"-1")==0 ? "NULL" : r->fields[15] ), // destination_hostgroup
+				( strcmp(r->fields[16],"-1")==0 ? "NULL" : r->fields[16] ), // cache_ttl
+				( strcmp(r->fields[17],"-1")==0 ? "NULL" : r->fields[17] ), // cache_empty_result
+				( strcmp(r->fields[18],"-1")==0 ? "NULL" : r->fields[18] ), // cache_timeout
+				( strcmp(r->fields[19],"-1")==0 ? "NULL" : r->fields[19] ), // reconnect
+				( strcmp(r->fields[20],"-1")==0 ? "NULL" : r->fields[20] ), // timeout
+				( strcmp(r->fields[21],"-1")==0 ? "NULL" : r->fields[21] ), // retries
+				( strcmp(r->fields[22],"-1")==0 ? "NULL" : r->fields[22] ), // delay
+				( strcmp(r->fields[23],"-1")==0 ? "NULL" : r->fields[23] ), // next_query_flagIN
+				( strcmp(r->fields[24],"-1")==0 ? "NULL" : r->fields[24] ), // mirror_flagOUT
+				( strcmp(r->fields[25],"-1")==0 ? "NULL" : r->fields[25] ), // mirror_hostgroup
+				buffs[26], // error_msg
+				buffs[27], // OK_msg
+				( strcmp(r->fields[28],"-1")==0 ? "NULL" : r->fields[28] ), // sticky_conn
+				( strcmp(r->fields[29],"-1")==0 ? "NULL" : r->fields[29] ), // multiplex
+				( strcmp(r->fields[30],"-1")==0 ? "NULL" : r->fields[30] ), // gtid_from_hostgroup
+				( strcmp(r->fields[31],"-1")==0 ? "NULL" : r->fields[31] ), // log
+				( strcmp(r->fields[32],"-1")==0 ? "NULL" : r->fields[32] ), // apply
+				buffs[33] // comment
+			);
 		for (int i=0; i<34; i++) {
 			free(buffs[i]);
 		}
-		free(query);
 	}
+
 	delete resultset;
 }
 
@@ -5874,7 +5731,7 @@ void ProxySQL_Admin::flush_admin_variables___runtime_to_database(SQLite3DB *db, 
 	  int cols=0;
 	  int affected_rows=0;
 	  SQLite3_result *resultset=NULL;
-	  char *q=(char *)"SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'admin-%'";
+	  char *q=(char *)"SELECT COUNT(*) FROM global_variables WHERE variable_name LIKE 'admin-%%'";
 	  db->execute_statement(q, &error , &cols , &affected_rows , &resultset);
 		int matching_rows=0;
 		if (error) {
@@ -5906,29 +5763,24 @@ void ProxySQL_Admin::flush_admin_variables___runtime_to_database(SQLite3DB *db, 
   } else {
     a=(char *)"INSERT OR IGNORE INTO global_variables(variable_name, variable_value) VALUES(\"admin-%s\",\"%s\")";
   }
-  int l=strlen(a)+200;
 
 	char **varnames=get_variables_list();
 	for (int i=0; varnames[i]; i++) {
 		char *val=get_variable(varnames[i]);
-		l+=( varnames[i] ? strlen(varnames[i]) : 6);
-		l+=( val ? strlen(val) : 6);
-		char *query=(char *)malloc(l);
-		sprintf(query, a, varnames[i], val);
-		db->execute(query);
+		db->execute(a, varnames[i], val);
 		if (runtime) {
-			sprintf(query, b, varnames[i], val);
-			db->execute(query);
+			db->execute(b, varnames[i], val);
 		}
-		if (val)
+
+		if (val) {
 			free(val);
-		free(query);
+		}
 	}
 	for (int i=0; varnames[i]; i++) {
 		free(varnames[i]);
 	}
-	free(varnames);
 
+	free(varnames);
 }
 
 #ifdef DEBUG
@@ -5943,10 +5795,7 @@ void ProxySQL_Admin::flush_debug_levels_runtime_to_database(SQLite3DB *db, bool 
   }
   int l=strlen(a)+100;
   for (i=0;i<PROXY_DEBUG_UNKNOWN;i++) {
-    char *query=(char *)malloc(l);
-    sprintf(query, a, GloVars.global.gdbg_lvl[i].name, GloVars.global.gdbg_lvl[i].verbosity);
-    db->execute(query);
-    free(query);
+    db->execute(a, GloVars.global.gdbg_lvl[i].name, GloVars.global.gdbg_lvl[i].verbosity);
   }
 }
 #endif /* DEBUG */
@@ -6174,11 +6023,7 @@ void ProxySQL_Admin::flush_mysql_query_rules__from_memory_to_disk() {
 
 void ProxySQL_Admin::__attach_db(SQLite3DB *db1, SQLite3DB *db2, char *alias) {
 	const char *a="ATTACH DATABASE '%s' AS %s";
-	int l=strlen(a)+strlen(db2->get_url())+strlen(alias)+5;
-	char *cmd=(char *)malloc(l);
-	sprintf(cmd,a,db2->get_url(), alias);
-	db1->execute(cmd);
-	free(cmd);
+	db1->execute(a,db2->get_url(), alias);
 }
 
 
@@ -6302,19 +6147,16 @@ void ProxySQL_Admin::__delete_inactive_users(enum cred_username_type usertype) {
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
 	char *str=(char *)"SELECT username FROM main.mysql_users WHERE %s=1 AND active=0";
-	char *query=(char *)malloc(strlen(str)+15);
-	sprintf(query,str,(usertype==USERNAME_BACKEND ? "backend" : "frontend"));
-	admindb->execute_statement(query, &error , &cols , &affected_rows , &resultset);
+	admindb->execute_statement(str, &error , &cols , &affected_rows , &resultset, (usertype==USERNAME_BACKEND ? "backend" : "frontend"));
 	if (error) {
-		proxy_error("Error on %s : %s\n", query, error);
+		proxy_error("Error on %s : %s\n", admindb->get_last_query(), error);
 	} else {
 		for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
-      SQLite3_row *r=*it;
+			SQLite3_row *r=*it;
 			GloMyAuth->del(r->fields[0], usertype);
 		}
 	}
-	if (resultset) delete resultset;
-	free(query);
+	if (resultset) { delete resultset; }
 }
 
 #ifdef PROXYSQLCLICKHOUSE
@@ -6324,8 +6166,6 @@ void ProxySQL_Admin::__delete_inactive_clickhouse_users() {
 	int affected_rows=0;
 	SQLite3_result *resultset=NULL;
 	char *str=(char *)"SELECT username FROM main.mysql_users WHERE active=0";
-	//char *query=(char *)malloc(strlen(str)+15);
-	//sprintf(query,str,(usertype==USERNAME_BACKEND ? "backend" : "frontend"));
 	admindb->execute_statement(str, &error , &cols , &affected_rows , &resultset);
 	if (error) {
 		proxy_error("Error on %s : %s\n", str, error);
@@ -6336,7 +6176,6 @@ void ProxySQL_Admin::__delete_inactive_clickhouse_users() {
 		}
 	}
 	if (resultset) delete resultset;
-	//free(query);
 }
 #endif /* PROXYSQLCLICKHOUSE */
 
@@ -6355,28 +6194,23 @@ void ProxySQL_Admin::__add_active_users(enum cred_username_type usertype, char *
 #else
 	SQLite3_result *resultset=NULL;
 #endif
-	char *str=NULL;
-	char *query=NULL;
+	const char *str=NULL;
 	if (__user==NULL) {
 		if (hash1) {
-			str=(char *)"SELECT username,password,use_ssl,default_hostgroup,default_schema,schema_locked,transaction_persistent,fast_forward,max_connections,comment FROM main.mysql_users WHERE %s=1 AND active=1 AND default_hostgroup>=0 ORDER BY username";
+			str = "SELECT username,password,use_ssl,default_hostgroup,default_schema,schema_locked,transaction_persistent,fast_forward,max_connections,comment FROM main.mysql_users WHERE %s=1 AND active=1 AND default_hostgroup>=0 ORDER BY username";
 		} else {
-			str=(char *)"SELECT username,password,use_ssl,default_hostgroup,default_schema,schema_locked,transaction_persistent,fast_forward,max_connections,comment FROM main.mysql_users WHERE %s=1 AND active=1 AND default_hostgroup>=0";
+			str = "SELECT username,password,use_ssl,default_hostgroup,default_schema,schema_locked,transaction_persistent,fast_forward,max_connections,comment FROM main.mysql_users WHERE %s=1 AND active=1 AND default_hostgroup>=0";
 		}
-		query=(char *)malloc(strlen(str)+15);
-		sprintf(query,str,(usertype==USERNAME_BACKEND ? "backend" : "frontend"));
 	} else {
-		str=(char *)"SELECT username,password,use_ssl,default_hostgroup,default_schema,schema_locked,transaction_persistent,fast_forward,max_connections,comment FROM main.mysql_users WHERE %s=1 AND active=1 AND default_hostgroup>=0 AND username='%s'";
-		query=(char *)malloc(strlen(str)+strlen(__user)+15);
-		sprintf(query,str,(usertype==USERNAME_BACKEND ? "backend" : "frontend"),__user);
+		str = "SELECT username,password,use_ssl,default_hostgroup,default_schema,schema_locked,transaction_persistent,fast_forward,max_connections,comment FROM main.mysql_users WHERE %s=1 AND active=1 AND default_hostgroup>=0 AND username='%s'";
 	}
 #ifdef ADDUSER_STMT_RAW
-	admindb->execute_statement_raw(query, &error , &cols , &affected_rows , &statement);
+	admindb->execute_statement_raw(str, &error , &cols , &affected_rows , &statement, (usertype==USERNAME_BACKEND ? "backend" : "frontend"),__user);
 #else
-	admindb->execute_statement(query, &error , &cols , &affected_rows , &resultset);
+	admindb->execute_statement(str, &error , &cols , &affected_rows , &resultset, (usertype==USERNAME_BACKEND ? "backend" : "frontend"),__user);
 #endif
 	if (error) {
-		proxy_error("Error on %s : %s\n", query, error);
+		proxy_error("Error on %s : %s\n", admindb->get_last_query(), error);
 	} else {
 #ifdef ADDUSER_STMT_RAW
 		int rc;
@@ -6462,7 +6296,6 @@ void ProxySQL_Admin::__add_active_users(enum cred_username_type usertype, char *
 #else
 	if (resultset) delete resultset;
 #endif
-	free(query);
 }
 
 #ifdef PROXYSQLCLICKHOUSE
@@ -6476,25 +6309,18 @@ void ProxySQL_Admin::__add_active_clickhouse_users(char *__user) {
 	SQLite3_result *resultset=NULL;
 #endif
 	char *str=NULL;
-	char *query=NULL;
 	if (__user==NULL) {
 		str=(char *)"SELECT username,password,max_connections FROM main.clickhouse_users WHERE active=1";
-		//query=(char *)malloc(strlen(str)+15);
-		//sprintf(query,str,(usertype==USERNAME_BACKEND ? "backend" : "frontend"));
-		query=strdup(str);
 	} else {
 		str=(char *)"SELECT username,password,max_connections FROM main.clickhouse_users WHERE active=1 AND username='%s'";
-		query=(char *)malloc(strlen(str)+strlen(__user)+15);
-		//sprintf(query,str,(usertype==USERNAME_BACKEND ? "backend" : "frontend"),__user);
-		sprintf(query,str,__user);
 	}
 #ifdef ADDUSER_STMT_RAW
-	admindb->execute_statement_raw(query, &error , &cols , &affected_rows , &statement);
+	admindb->execute_statement_raw(str, &error , &cols , &affected_rows , &statement, __user);
 #else
-	admindb->execute_statement(query, &error , &cols , &affected_rows , &resultset);
+	admindb->execute_statement(str, &error , &cols , &affected_rows , &resultset, __user);
 #endif
 	if (error) {
-		proxy_error("Error on %s : %s\n", query, error);
+		proxy_error("Error on %s : %s\n", admindb->get_last_query(), error);
 	} else {
 #ifdef ADDUSER_STMT_RAW
 		int rc;
@@ -6563,7 +6389,6 @@ void ProxySQL_Admin::__add_active_clickhouse_users(char *__user) {
 #else
 	if (resultset) delete resultset;
 #endif
-	free(query);
 }
 #endif /* PROXYSQLCLICKHOUSE */
 
@@ -6684,39 +6509,12 @@ void ProxySQL_Admin::save_mysql_users_runtime_to_database(bool _runtime) {
 		account_details_t *ad=ads[i];
 		sqlite3_stmt *statement1=NULL;
 		if (ads[i]->default_hostgroup >= 0) {
-			/*
-			char *q=NULL;
-			if (_runtime==false) {
-				if (ad->__frontend) {
-					q=qf;
-				} else {
-					q=qb;
-				}
-			} else { // _runtime==true
-				if (ad->__frontend) {
-					q=qfr;
-					statement1=f_statement1;
-				} else {
-					q=qbr;
-					statement1=b_statement1;
-				}
-			}
-			*/
 			if (ad->__frontend) {
 				statement1=f_statement1;
 			} else {
 				statement1=b_statement1;
 			}
-/*
-			if (_runtime==false) {
-				query=(char *)malloc(strlen(q)+strlen(ad->username)*2+strlen(ad->password)+strlen(ad->default_schema)+256);
-				sprintf(query, q, ad->username, ad->password, ad->use_ssl, ad->default_hostgroup, ad->default_schema, ad->schema_locked, ad->transaction_persistent, ad->fast_forward, ad->username, ad->max_connections);
-				//fprintf(stderr,"%s\n",query);
-				proxy_debug(PROXY_DEBUG_ADMIN, 4, "%s\n", query);
-				admindb->execute(query);
-				free(query);
-			} else {
-*/
+
 			rc=sqlite3_bind_text(statement1, 1, ad->username, -1, SQLITE_TRANSIENT); assert(rc==SQLITE_OK);
 			rc=sqlite3_bind_text(statement1, 2, ad->password, -1, SQLITE_TRANSIENT); assert(rc==SQLITE_OK);
 			rc=sqlite3_bind_int64(statement1, 3, ad->use_ssl); assert(rc==SQLITE_OK);
@@ -6747,7 +6545,6 @@ void ProxySQL_Admin::save_mysql_users_runtime_to_database(bool _runtime) {
 
 #ifdef PROXYSQLCLICKHOUSE
 void ProxySQL_Admin::save_clickhouse_users_runtime_to_database(bool _runtime) {
-	char *query=NULL;
 	if (_runtime) {
 		query=(char *)"DELETE FROM main.runtime_clickhouse_users";
 		admindb->execute(query);
@@ -6811,27 +6608,18 @@ void ProxySQL_Admin::save_clickhouse_users_runtime_to_database(bool _runtime) {
 				}
 			}
 			if (_runtime==false) {
-				query=(char *)malloc(strlen(q)+strlen(ad->username)*2+strlen(ad->password)+strlen(ad->default_schema)+256);
+
 				//sprintf(query, q, ad->username, ad->password, ad->use_ssl, ad->default_hostgroup, ad->default_schema, ad->schema_locked, ad->transaction_persistent, ad->fast_forward, ad->username, ad->max_connections);
-				sprintf(query, q, ad->username, ad->password, ad->max_connections);
+				sprintf(query, );
 				//fprintf(stderr,"%s\n",query);
 				proxy_debug(PROXY_DEBUG_ADMIN, 4, "%s\n", query);
-				admindb->execute(query);
-				free(query);
+				admindb->execute(q, ad->username, ad->password, ad->max_connections);
+
 			} else {
 				rc=sqlite3_bind_text(statement1, 1, ad->username, -1, SQLITE_TRANSIENT); assert(rc==SQLITE_OK);
 				rc=sqlite3_bind_text(statement1, 2, ad->password, -1, SQLITE_TRANSIENT); assert(rc==SQLITE_OK);
 				rc=sqlite3_bind_int64(statement1, 3, ad->max_connections); assert(rc==SQLITE_OK);
-/*
-				rc=sqlite3_bind_int64(statement1, 3, ad->use_ssl); assert(rc==SQLITE_OK);
-				rc=sqlite3_bind_int64(statement1, 4, ad->default_hostgroup); assert(rc==SQLITE_OK);
-				rc=sqlite3_bind_text(statement1, 5, ad->default_schema, -1, SQLITE_TRANSIENT); assert(rc==SQLITE_OK);
-				rc=sqlite3_bind_int64(statement1, 6, ad->schema_locked); assert(rc==SQLITE_OK);
-				rc=sqlite3_bind_int64(statement1, 7, ad->transaction_persistent); assert(rc==SQLITE_OK);
-				rc=sqlite3_bind_int64(statement1, 8, ad->fast_forward); assert(rc==SQLITE_OK);
-				rc=sqlite3_bind_text(statement1, 9, ad->username, -1, SQLITE_TRANSIENT); assert(rc==SQLITE_OK);
-				rc=sqlite3_bind_int64(statement1, 10, ad->max_connections); assert(rc==SQLITE_OK);
-*/
+
 				SAFE_SQLITE3_STEP2(statement1);
 				rc=sqlite3_clear_bindings(statement1); assert(rc==SQLITE_OK);
 				rc=sqlite3_reset(statement1); assert(rc==SQLITE_OK);
@@ -6856,23 +6644,12 @@ void ProxySQL_Admin::stats___mysql_users() {
 	int i;
 	statsdb->execute("DELETE FROM stats_mysql_users");
 	char *q=(char *)"INSERT INTO stats_mysql_users(username,frontend_connections,frontend_max_connections) VALUES ('%s',%d,%d)";
-	int l=strlen(q);
-	char buf[256];
 	num_users=GloMyAuth->dump_all_users(&ads, false);
 	if (num_users==0) return;
 	for (i=0; i<num_users; i++) {
 		account_details_t *ad=ads[i];
 		if (ad->default_hostgroup>= 0) { // only not admin/stats
-			if ( (strlen(ad->username) + l) > 210) {
-				char *query=(char *)malloc(strlen(ad->username)+l+32);
-				sprintf(query,q,ad->username,ad->num_connections_used);
-				sprintf(query,q,ad->username,ad->max_connections);
-				statsdb->execute(query);
-				free(query);
-			} else {
-				sprintf(buf,q,ad->username,ad->num_connections_used,ad->max_connections);
-				statsdb->execute(buf);
-			}
+			statsdb->execute(q,ad->username,ad->num_connections_used,ad->max_connections);
 		}
 		free(ad->username);
 		free(ad);
@@ -6962,9 +6739,6 @@ void ProxySQL_Admin::save_scheduler_runtime_to_database(bool _runtime) {
 	for (std::vector<Scheduler_Row *>::iterator it = scheduler->Scheduler_Rows.begin() ; it != scheduler->Scheduler_Rows.end(); ++it) {
 		Scheduler_Row *sr=*it;
 		int i;
-		int l=strlen(q);
-
-		l+=strlen(sr->filename);
 
 		for (i=0; i<5; i++) {
 			if (sr->args[i]) {
@@ -6973,24 +6747,20 @@ void ProxySQL_Admin::save_scheduler_runtime_to_database(bool _runtime) {
 			} else {
 				args[i]=(char *)"NULL";
 			}
-			l+=strlen(args[i]);
 		}
-		char *o=escape_string_single_quotes(sr->comment,false); // issue #643
-		l+=strlen(o);
-		l+=35; //padding
+		char *o=escape_string_single_quotes(sr->comment, false); // issue #643
 		int is_active=0;
 		if (sr->is_active==true) {
 			is_active=1;
 		}
-		char *query=(char *)malloc(l);
 
-		sprintf(query, q,
-			sr->id, is_active, sr->interval_ms,
-			sr->filename, args[0],
-			args[1], args[2],
-			args[3], args[4],
-			o
-		);
+		admindb->execute(q,
+				sr->id, is_active, sr->interval_ms,
+				sr->filename, args[0],
+				args[1], args[2],
+				args[3], args[4],
+				o
+			);
 		if (o!=sr->comment) {
 			free(o);
 		}
@@ -7000,9 +6770,6 @@ void ProxySQL_Admin::save_scheduler_runtime_to_database(bool _runtime) {
 				free(args[i]);	// free only if we allocated memory
 			}
 		}
-
-		admindb->execute(query);
-		free(query);
 	}
 
 	// unlock the scheduler
@@ -7116,19 +6883,13 @@ void ProxySQL_Admin::save_mysql_servers_runtime_to_database(bool _runtime) {
 			} else {
 				q=(char *)"INSERT INTO mysql_replication_hostgroups VALUES(%s,%s,'%s','%s')";
 			}
-			char *query=(char *)malloc(strlen(q)+strlen(r->fields[0])+strlen(r->fields[1])+strlen(r->fields[2])+16+l);
-			if (r->fields[3]) {
-				char *o=escape_string_single_quotes(r->fields[3],false);
-				sprintf(query, q, r->fields[0], r->fields[1], r->fields[2], o);
-				if (o!=r->fields[3]) { // there was a copy
-					free(o);
-				}
-			//} else {
-				//sprintf(query, q, r->fields[0], r->fields[1], r->fields[2], r->fields[3]);
-			}
+
+			char *o= (r->fields[3]) ? escape_string_single_quotes(r->fields[3], false) :  escape_string_single_quotes("NULL", false);
 			proxy_debug(PROXY_DEBUG_MYSQL_CONNPOOL, 4, "%s\n", query);
-			admindb->execute(query);
-			free(query);
+			admindb->execute(q, r->fields[0], r->fields[1], r->fields[2], o);
+			if (o!=r->fields[3]) { // there was a copy
+				free(o);
+			}
 		}
 	}
 	if(resultset) delete resultset;
@@ -7543,12 +7304,11 @@ int ProxySQL_Admin::Read_MySQL_Users_from_configfile() {
 		user.lookupValue("comment", comment);
 		char *o1=strdup(comment.c_str());
 		char *o=escape_string_single_quotes(o1, false);
-		char *query=(char *)malloc(strlen(q)+strlen(username.c_str())+strlen(password.c_str())+strlen(o)+128);
-		sprintf(query,q, username.c_str(), password.c_str(), active, default_hostgroup, default_schema.c_str(), schema_locked, transaction_persistent, fast_forward, max_connections, o);
-		admindb->execute(query);
-		if (o!=o1) free(o);
+
+		admindb->execute(q, username.c_str(), password.c_str(), active, default_hostgroup, default_schema.c_str(), schema_locked, transaction_persistent, fast_forward, max_connections, o);
+		if (o!=o1) { free(o); }
 		free(o1);
-		free(query);
+
 		rows++;
 	}
 	admindb->execute("PRAGMA foreign_keys = ON");
@@ -7600,21 +7360,6 @@ int ProxySQL_Admin::Read_Scheduler_from_configfile() {
 		if (sched.lookupValue("arg5", arg5)) arg5_exists=true;
 		sched.lookupValue("comment", comment);
 
-
-		int query_len=0;
-		query_len+=strlen(q) +
-			strlen(std::to_string(id).c_str()) +
-			strlen(std::to_string(active).c_str()) +
-			strlen(std::to_string(interval_ms).c_str()) +
-			strlen(filename.c_str()) +
-			( arg1_exists ? strlen(arg1.c_str()) : 0 ) + 4 +
-			( arg2_exists ? strlen(arg2.c_str()) : 0 ) + 4 +
-			( arg3_exists ? strlen(arg3.c_str()) : 0 ) + 4 +
-			( arg4_exists ? strlen(arg4.c_str()) : 0 ) + 4 +
-			( arg5_exists ? strlen(arg5.c_str()) : 0 ) + 4 +
-			strlen(comment.c_str()) +
-			40;
-		char *query=(char *)malloc(query_len);
 		if (arg1_exists)
 			arg1="\'" + arg1 + "\'";
 		else
@@ -7636,19 +7381,17 @@ int ProxySQL_Admin::Read_Scheduler_from_configfile() {
 		else
 			arg5 = "NULL";
 
-		sprintf(query, q,
-			id, active,
-			interval_ms,
-			filename.c_str(),
-			arg1.c_str(),
-			arg2.c_str(),
-			arg3.c_str(),
-			arg4.c_str(),
-			arg5.c_str(),
-			comment.c_str()
-		);
-		admindb->execute(query);
-		free(query);
+		admindb->execute(q,
+				id, active,
+				interval_ms,
+				filename.c_str(),
+				arg1.c_str(),
+				arg2.c_str(),
+				arg3.c_str(),
+				arg4.c_str(),
+				arg5.c_str(),
+				comment.c_str()
+			);
 		rows++;
 	}
 	admindb->execute("PRAGMA foreign_keys = ON");
@@ -7780,47 +7523,6 @@ int ProxySQL_Admin::Read_MySQL_Query_Rules_from_configfile() {
 		rule.lookupValue("apply", apply);
 		if (rule.lookupValue("comment", comment)) comment_exists=true;
 
-
-		//if (user.lookupValue("default_schema", default_schema)==false) default_schema="";
-		int query_len=0;
-		query_len+=strlen(q) +
-			strlen(std::to_string(rule_id).c_str()) +
-			strlen(std::to_string(active).c_str()) +
-			( username_exists ? strlen(username.c_str()) : 0 ) + 4 +
-			( schemaname_exists ? strlen(schemaname.c_str()) : 0 ) + 4 +
-			strlen(std::to_string(flagIN).c_str()) + 4 +
-
-			( client_addr_exists ? strlen(client_addr.c_str()) : 0 ) + 4 +
-			( proxy_addr_exists ? strlen(proxy_addr.c_str()) : 0 ) + 4 +
-			strlen(std::to_string(proxy_port).c_str()) + 4 +
-
-			( match_digest_exists ? strlen(match_digest.c_str()) : 0 ) + 4 +
-			( match_pattern_exists ? strlen(match_pattern.c_str()) : 0 ) + 4 +
-			strlen(std::to_string(negate_match_pattern).c_str()) + 4 +
-			( re_modifiers_exists ? strlen(re_modifiers.c_str()) : 0 ) + 4 +
-			strlen(std::to_string(flagOUT).c_str()) + 4 +
-			( replace_pattern_exists ? strlen(replace_pattern.c_str()) : 0 ) + 4 +
-			strlen(std::to_string(destination_hostgroup).c_str()) + 4 +
-			strlen(std::to_string(cache_ttl).c_str()) + 4 +
-			strlen(std::to_string(cache_empty_result).c_str()) + 4 +
-			strlen(std::to_string(cache_timeout).c_str()) + 4 +
-			strlen(std::to_string(reconnect).c_str()) + 4 +
-			strlen(std::to_string(timeout).c_str()) + 4 +
-			strlen(std::to_string(next_query_flagIN).c_str()) + 4 +
-			strlen(std::to_string(mirror_flagOUT).c_str()) + 4 +
-			strlen(std::to_string(mirror_hostgroup).c_str()) + 4 +
-			strlen(std::to_string(retries).c_str()) + 4 +
-			strlen(std::to_string(delay).c_str()) + 4 +
-			( error_msg_exists ? strlen(error_msg.c_str()) : 0 ) + 4 +
-			( OK_msg_exists ? strlen(OK_msg.c_str()) : 0 ) + 4 +
-			strlen(std::to_string(sticky_conn).c_str()) + 4 +
-			strlen(std::to_string(multiplex).c_str()) + 4 +
-			strlen(std::to_string(gtid_from_hostgroup).c_str()) + 4 +
-			strlen(std::to_string(log).c_str()) + 4 +
-			strlen(std::to_string(apply).c_str()) + 4 +
-			( comment_exists ? strlen(comment.c_str()) : 0 ) + 4 +
-			64;
-		char *query=(char *)malloc(query_len);
 		if (username_exists)
 			username="\"" + username + "\"";
 		else
@@ -7872,45 +7574,41 @@ int ProxySQL_Admin::Read_MySQL_Query_Rules_from_configfile() {
 		else
 			comment = "NULL";
 
-
-		sprintf(query, q,
-			rule_id, active,
-			username.c_str(),
-			schemaname.c_str(),
-			( flagIN >= 0 ? std::to_string(flagIN).c_str() : "NULL") ,
-			client_addr.c_str(),
-			proxy_addr.c_str(),
-			( proxy_port >= 0 ? std::to_string(proxy_port).c_str() : "NULL") ,
-			digest.c_str(),
-			match_digest.c_str(),
-			match_pattern.c_str(),
-			( negate_match_pattern == 0 ? 0 : 1) ,
-			re_modifiers.c_str(),
-			( flagOUT >= 0 ? std::to_string(flagOUT).c_str() : "NULL") ,
-			replace_pattern.c_str(),
-			( destination_hostgroup >= 0 ? std::to_string(destination_hostgroup).c_str() : "NULL") ,
-			( cache_ttl >= 0 ? std::to_string(cache_ttl).c_str() : "NULL") ,
-			( cache_empty_result >= 0 ? std::to_string(cache_empty_result).c_str() : "NULL") ,
-			( cache_timeout >= 0 ? std::to_string(cache_timeout).c_str() : "NULL") ,
-			( reconnect >= 0 ? std::to_string(reconnect).c_str() : "NULL") ,
-			( timeout >= 0 ? std::to_string(timeout).c_str() : "NULL") ,
-			( retries >= 0 ? std::to_string(retries).c_str() : "NULL") ,
-			( delay >= 0 ? std::to_string(delay).c_str() : "NULL") ,
-			( next_query_flagIN >= 0 ? std::to_string(next_query_flagIN).c_str() : "NULL") ,
-			( mirror_flagOUT >= 0 ? std::to_string(mirror_flagOUT).c_str() : "NULL") ,
-			( mirror_hostgroup >= 0 ? std::to_string(mirror_hostgroup).c_str() : "NULL") ,
-			error_msg.c_str(),
-			OK_msg.c_str(),
-			( sticky_conn >= 0 ? std::to_string(sticky_conn).c_str() : "NULL") ,
-			( multiplex >= 0 ? std::to_string(multiplex).c_str() : "NULL") ,
-			( gtid_from_hostgroup >= 0 ? std::to_string(gtid_from_hostgroup).c_str() : "NULL") ,
-			( log >= 0 ? std::to_string(log).c_str() : "NULL") ,
-			( apply == 0 ? 0 : 1) ,
-			comment.c_str()
-		);
-		//fprintf(stderr, "%s\n", query);
-		admindb->execute(query);
-		free(query);
+		admindb->execute(q,
+				rule_id, active,
+				username.c_str(),
+				schemaname.c_str(),
+				( flagIN >= 0 ? std::to_string(flagIN).c_str() : "NULL") ,
+				client_addr.c_str(),
+				proxy_addr.c_str(),
+				( proxy_port >= 0 ? std::to_string(proxy_port).c_str() : "NULL") ,
+				digest.c_str(),
+				match_digest.c_str(),
+				match_pattern.c_str(),
+				( negate_match_pattern == 0 ? 0 : 1) ,
+				re_modifiers.c_str(),
+				( flagOUT >= 0 ? std::to_string(flagOUT).c_str() : "NULL") ,
+				replace_pattern.c_str(),
+				( destination_hostgroup >= 0 ? std::to_string(destination_hostgroup).c_str() : "NULL") ,
+				( cache_ttl >= 0 ? std::to_string(cache_ttl).c_str() : "NULL") ,
+				( cache_empty_result >= 0 ? std::to_string(cache_empty_result).c_str() : "NULL") ,
+				( cache_timeout >= 0 ? std::to_string(cache_timeout).c_str() : "NULL") ,
+				( reconnect >= 0 ? std::to_string(reconnect).c_str() : "NULL") ,
+				( timeout >= 0 ? std::to_string(timeout).c_str() : "NULL") ,
+				( retries >= 0 ? std::to_string(retries).c_str() : "NULL") ,
+				( delay >= 0 ? std::to_string(delay).c_str() : "NULL") ,
+				( next_query_flagIN >= 0 ? std::to_string(next_query_flagIN).c_str() : "NULL") ,
+				( mirror_flagOUT >= 0 ? std::to_string(mirror_flagOUT).c_str() : "NULL") ,
+				( mirror_hostgroup >= 0 ? std::to_string(mirror_hostgroup).c_str() : "NULL") ,
+				error_msg.c_str(),
+				OK_msg.c_str(),
+				( sticky_conn >= 0 ? std::to_string(sticky_conn).c_str() : "NULL") ,
+				( multiplex >= 0 ? std::to_string(multiplex).c_str() : "NULL") ,
+				( gtid_from_hostgroup >= 0 ? std::to_string(gtid_from_hostgroup).c_str() : "NULL") ,
+				( log >= 0 ? std::to_string(log).c_str() : "NULL") ,
+				( apply == 0 ? 0 : 1) ,
+				comment.c_str()
+			);
 		rows++;
 	}
 	admindb->execute("PRAGMA foreign_keys = ON");
@@ -7967,13 +7665,10 @@ int ProxySQL_Admin::Read_MySQL_Servers_from_configfile() {
 			server.lookupValue("comment", comment);
 			char *o1=strdup(comment.c_str());
 			char *o=escape_string_single_quotes(o1, false);
-			char *query=(char *)malloc(strlen(q)+strlen(status.c_str())+strlen(address.c_str())+strlen(o)+128);
-			sprintf(query,q, address.c_str(), port, gtid_port, hostgroup, compression, weight, status.c_str(), max_connections, max_replication_lag, use_ssl, max_latency_ms, o);
-			//fprintf(stderr, "%s\n", query);
-			admindb->execute(query);
+
+			admindb->execute(q, address.c_str(), port, gtid_port, hostgroup, compression, weight, status.c_str(), max_connections, max_replication_lag, use_ssl, max_latency_ms, o);
 			if (o!=o1) free(o);
 			free(o1);
-			free(query);
 			rows++;
 		}
 	}
@@ -8002,15 +7697,12 @@ int ProxySQL_Admin::Read_MySQL_Servers_from_configfile() {
 			}
 			char *t1=strdup(check_type.c_str());
 			char *t=escape_string_single_quotes(t1, false);
-			char *query=(char *)malloc(strlen(q)+strlen(o)+strlen(t)+32);
-			sprintf(query,q, writer_hostgroup, reader_hostgroup, o, t);
-			//fprintf(stderr, "%s\n", query);
-			admindb->execute(query);
+
+			admindb->execute(q, writer_hostgroup, reader_hostgroup, o, t);
 			if (o!=o1) free(o);
 			free(o1);
 			if (t!=t1) free(t);
 			free(t1);
-			free(query);
 			rows++;
 		}
 	}
@@ -8039,13 +7731,10 @@ int ProxySQL_Admin::Read_MySQL_Servers_from_configfile() {
                         line.lookupValue("comment", comment);
                         char *o1=strdup(comment.c_str());
                         char *o=escape_string_single_quotes(o1, false);
-                        char *query=(char *)malloc(strlen(q)+strlen(o)+128); // 128 vs sizeof(int)*8
-                        sprintf(query,q, writer_hostgroup, backup_writer_hostgroup, reader_hostgroup, offline_hostgroup, active, max_writers, writer_is_also_reader, max_transactions_behind, o);
-                        //fprintf(stderr, "%s\n", query);
-                        admindb->execute(query);
+
+                        admindb->execute(q, writer_hostgroup, backup_writer_hostgroup, reader_hostgroup, offline_hostgroup, active, max_writers, writer_is_also_reader, max_transactions_behind, o);
                         if (o!=o1) free(o);
                         free(o1);
-                        free(query);
                         rows++;
                 }
         }
@@ -8074,13 +7763,10 @@ int ProxySQL_Admin::Read_MySQL_Servers_from_configfile() {
                     line.lookupValue("comment", comment);
                     char *o1=strdup(comment.c_str());
                     char *o=escape_string_single_quotes(o1, false);
-                    char *query=(char *)malloc(strlen(q)+strlen(o)+128); // 128 vs sizeof(int)*8
-                    sprintf(query,q, writer_hostgroup, backup_writer_hostgroup, reader_hostgroup, offline_hostgroup, active, max_writers, writer_is_also_reader, max_transactions_behind, o);
-                    //fprintf(stderr, "%s\n", query);
-                    admindb->execute(query);
+
+                    admindb->execute(q, writer_hostgroup, backup_writer_hostgroup, reader_hostgroup, offline_hostgroup, active, max_writers, writer_is_also_reader, max_transactions_behind, o);
                     if (o!=o1) free(o);
                     free(o1);
-                    free(query);
                     rows++;
             }
     }
@@ -8114,14 +7800,11 @@ int ProxySQL_Admin::Read_ProxySQL_Servers_from_configfile() {
 			server.lookupValue("comment", comment);
 			char *o1=strdup(comment.c_str());
 			char *o=escape_string_single_quotes(o1, false);
-			char *query=(char *)malloc(strlen(q)+strlen(address.c_str())+strlen(o)+128);
-			sprintf(query, q, address.c_str(), port, weight, o);
+
 			proxy_info("Cluster: Adding ProxySQL Servers %s:%d from config file\n", address.c_str(), port);
-			//fprintf(stderr, "%s\n", query);
-			admindb->execute(query);
+			admindb->execute(q, address.c_str(), port, weight, o);s
 			if (o!=o1) free(o);
 			free(o1);
-			free(query);
 			rows++;
 		}
 	}

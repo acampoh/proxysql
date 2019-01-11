@@ -178,7 +178,7 @@ class SQLite3DB {
 	char* query_buffer;
 	uint32_t buffer_size;
 
-	void generate_querystring(const char* str, va_list);
+	void generate_querystring(const char* str, va_list&);
 
 #ifdef PROXYSQL_SQLITE3DB_PTHREAD_MUTEX
 	pthread_rwlock_t rwlock;

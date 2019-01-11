@@ -53,9 +53,10 @@ int SQLite3DB::open(char *__url, int flags) {
 	return 0;
 }
 
-void SQLite3DB::generate_querystring(const char* str, va_list params) {
-
-	uint32_t replacement_size = vsnprintf(nullptr, 0, str, params);
+void SQLite3DB::generate_querystring(const char* str, va_list &params) {
+	va_list size_test_params;
+	va_copy(size_test_params, params);
+	uint32_t replacement_size = vsnprintf(query_buffer, buffer_size, str, size_test_params);
 
 	if (replacement_size >= buffer_size) {
 		if (query_buffer) {
@@ -65,6 +66,7 @@ void SQLite3DB::generate_querystring(const char* str, va_list params) {
 		query_buffer = (char*) malloc(buffer_size);
 	}
 
+	va_end(size_test_params);
 	vsnprintf(query_buffer, buffer_size, str, params);
 }
 
