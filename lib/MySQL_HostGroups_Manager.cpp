@@ -49,113 +49,7 @@ class MySrvC;
 class MySrvList;
 class MyHGC;
 
-/*
-class HGM_query_errors_stats {
-	public:
-	int hid;
-	char *hostname;
-	int port;
-	char *username;
-	char *schemaname;
-	int error_no;
-	unsigned int count_star;
-	time_t first_seen;
-	time_t last_seen;
-	char *last_error;
-	HGM_query_errors_stats(int _h, char *_hn, int _p, char *u, char *s, int e, char *le) {
-		hid=_h;
-		hostname=strdup(_hn);
-		port=_p;
-		username=strdup(u);
-		schemaname=strdup(s);
-		error_no=e;
-		last_error=strdup(le);
-		count_star=0;
-		first_seen=0;
-		last_seen=0;
-	}
-	void add_time(unsigned long long n, char *le) {
-		count_star++;
-		if (first_seen==0) {
-			first_seen=n;
-		}
-		last_seen=n;
-		if (strcmp(last_error,le)){
-			free(last_error);
-			last_error=strdup(le);
-		}
-	}
-	~HGM_query_errors_stats() {
-		if (hostname) {
-			free(hostname);
-			hostname=NULL;
-		}
-		if (username) {
-			free(username);
-			username=NULL;
-		}
-		if (schemaname) {
-			free(schemaname);
-			schemaname=NULL;
-		}
-		if (last_error) {
-			free(last_error);
-			last_error=NULL;
-		}
-	}
-	char **get_row() {
-		char buf[128];
-		char **pta=(char **)malloc(sizeof(char *)*10);
-		sprintf(buf,"%d",hid);
-		pta[0]=strdup(buf);
-		assert(hostname);
-		pta[1]=strdup(hostname);
-		sprintf(buf,"%d",port);
-		pta[2]=strdup(buf);
-		assert(username);
-		pta[3]=strdup(username);
-		assert(schemaname);
-		pta[4]=strdup(schemaname);
-		sprintf(buf,"%d",error_no);
-		pta[5]=strdup(buf);
-
-		sprintf(buf,"%u",count_star);
-		pta[6]=strdup(buf);
-
-		time_t __now;
-		time(&__now);
-		unsigned long long curtime=monotonic_time();
-		time_t seen_time;
-
-		seen_time= __now - curtime/1000000 + first_seen/1000000;
-		sprintf(buf,"%ld", seen_time);
-		pta[7]=strdup(buf);
-
-		seen_time= __now - curtime/1000000 + last_seen/1000000;
-		sprintf(buf,"%ld", seen_time);
-		pta[8]=strdup(buf);
-
-		assert(last_error);
-		pta[9]=strdup(last_error);
-		return pta;
-	}
-	void free_row(char **pta) {
-		int i;
-		for (i=0;i<10;i++) {
-			assert(pta[i]);
-			free(pta[i]);
-		}
-		free(pta);
-	}
-};
-
-*/
-
-//static struct ev_async * gtid_ev_async;
-
 static pthread_mutex_t ev_loop_mutex;
-
-//static std::unordered_map <string, Gtid_Server_Info *> gtid_map;
 
 static void gtid_async_cb(struct ev_loop *loop, struct ev_async *watcher, int revents) {
 	if (glovars.shutdown) {
@@ -2224,8 +2118,8 @@ void MySQL_HostGroups_Manager::push_MyConn_to_pool_array(MySQL_Connection **ca, 
 MySrvC *MyHGC::get_random_MySrvC(char * gtid_uuid, uint64_t gtid_trxid, int max_lag_ms, MySQL_Session *sess) {
 	MySrvC *mysrvc=NULL;
 	unsigned int j;
-	unsigned int sum=0;
-	unsigned int TotalUsedConn=0;
+	uint64_t sum=0;
+	uint64_t TotalUsedConn=0;
 	unsigned int l=mysrvs->cnt();
 #ifdef USE_MYSRVC_ARRAY
 #ifdef TEST_AURORA
@@ -2409,8 +2303,8 @@ MySrvC *MyHGC::get_random_MySrvC(char * gtid_uuid, uint64_t gtid_trxid, int max_
 			return NULL; // if we reach here, we couldn't find any target
 		}
 
-		unsigned int New_sum=0;
-		unsigned int New_TotalUsedConn=0;
+		uint64_t New_sum=0;
+		uint64_t New_TotalUsedConn=0;
 
 		// we will now scan again to ignore overloaded servers
 #ifdef USE_MYSRVC_ARRAY
@@ -2421,7 +2315,7 @@ MySrvC *MyHGC::get_random_MySrvC(char * gtid_uuid, uint64_t gtid_trxid, int max_
 			mysrvc=mysrvs->idx(j);
 			if (mysrvc->status==MYSQL_SERVER_STATUS_ONLINE) { // consider this server only if ONLINE
 #endif // USE_MYSRVC_ARRAY
-				unsigned int len=mysrvc->ConnectionsUsed->conns_length();
+				uint64_t len=mysrvc->ConnectionsUsed->conns_length();
 #ifdef USE_MYSRVC_ARRAY
 #else
 
@@ -2525,7 +2419,7 @@ MySrvC *MyHGC::get_random_MySrvC(char * gtid_uuid, uint64_t gtid_trxid, int max_
 #endif // USE_MYSRVC_ARRAY
 
 
-		unsigned int k;
+		uint64_t k;
 		if (New_sum > 32768) {
 			k=rand()%New_sum;
 		} else {
@@ -3182,7 +3076,7 @@ void MySQL_HostGroups_Manager::read_only_action(char *hostname, int port, int re
 	resultset=NULL;
 	if (admindb==NULL) { // we initialize admindb only if needed
 		admindb=new SQLite3DB();
-		admindb->open((char *)"file:mem_admindb?mode=memory&cache=shared", SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX);	
+		admindb->open((char *)"file:mem_admindb?mode=memory&cache=shared", SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX);
 	}
 
 	switch (read_only) {
